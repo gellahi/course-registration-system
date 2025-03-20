@@ -14,7 +14,7 @@ exports.seedInitialData = async (req, res) => {
             await User.create({
                 rollNumber: 'admin123',
                 name: 'System Administrator',
-                password: 'admin123', // Should be changed immediately in production
+                password: 'admin123',
                 role: 'admin'
             });
         }
@@ -25,8 +25,8 @@ exports.seedInitialData = async (req, res) => {
         if (!studentExists) {
             await User.create({
                 rollNumber: '22F-3636',
-                name: 'Your Name',
-                password: 'password123', // Should be changed
+                name: 'Gohar Ellahi',
+                password: 'Fast@3636',
                 role: 'student'
             });
         }
