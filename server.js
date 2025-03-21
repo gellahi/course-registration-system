@@ -2,6 +2,7 @@ const express = require('express');
 const dotenv = require('dotenv');
 const path = require('path');
 const connectDB = require('./config/db');
+const cookieParser = require('cookie-parser');
 
 // Load environment variables
 dotenv.config();
@@ -14,6 +15,7 @@ const app = express();
 // Body parser middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
+app.use(cookieParser());
 
 // Set static folder
 app.use(express.static(path.join(__dirname, 'public')));

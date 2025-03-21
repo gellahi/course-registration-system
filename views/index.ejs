@@ -1,0 +1,64 @@
+<%- include('./partials/header') %>
+
+    <div class="landing-page">
+        <nav class="landing-nav">
+            <div class="logo">
+                <img src="/img/logo.svg" alt="CRS Logo">
+                <span>Course Registration System</span>
+            </div>
+            <div class="nav-links">
+                <a href="/student/login" class="btn btn-outline">Student Login</a>
+                <a href="/admin/login" class="btn btn-primary">Admin Login</a>
+            </div>
+        </nav>
+
+        <section class="hero">
+            <div class="hero-content">
+                <h1>Modern Course Registration</h1>
+                <p>A streamlined experience for students and administrators</p>
+                <div class="hero-buttons">
+                    <a href="/student/login" class="btn btn-primary">Student Access</a>
+                    <a href="/admin/login" class="btn btn-secondary">Administrative Portal</a>
+                </div>
+            </div>
+            <div class="hero-image">
+                <img src="/img/hero-illustration.svg" alt="Course Registration Illustration">
+            </div>
+        </section>
+
+        <section class="features">
+            <h2>Key Features</h2>
+            <div class="feature-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-calendar-alt"></i>
+                    </div>
+                    <h3>Interactive Schedule</h3>
+                    <p>Visualize your weekly timetable and avoid conflicts</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-search"></i>
+                    </div>
+                    <h3>Advanced Course Filtering</h3>
+                    <p>Find courses that match your requirements and schedule</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-bell"></i>
+                    </div>
+                    <h3>Seat Notifications</h3>
+                    <p>Get alerts when seats become available in full courses</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-project-diagram"></i>
+                    </div>
+                    <h3>Prerequisite Management</h3>
+                    <p>Plan your courses with clear prerequisite guidance</p>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <%- include('./partials/footer') %>

@@ -32,6 +32,12 @@ exports.authUser = async (req, res) => {
         // Generate token
         const token = generateToken(user._id);
 
+        res.cookie('token', token, {
+            httpOnly: true,
+            maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
+            secure: process.env.NODE_ENV === 'production'
+        });
+
         // Return user data
         res.json({
             success: true,
@@ -71,6 +77,12 @@ exports.authAdmin = async (req, res) => {
 
         // Generate token
         const token = generateToken(admin._id);
+
+        res.cookie('token', token, {
+            httpOnly: true,
+            maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
+            secure: process.env.NODE_ENV === 'production'
+        });
 
         // Return admin data
         res.json({

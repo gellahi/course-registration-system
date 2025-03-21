@@ -1,5 +1,7 @@
 const express = require('express');
 const router = express.Router();
+const { protect, admin } = require('../middleware/auth');
+const User = require('../models/user');
 
 // Home page
 router.get('/', (req, res) => {
@@ -16,14 +18,32 @@ router.get('/admin/login', (req, res) => {
     res.render('admin/login');
 });
 
-// Student dashboard
-router.get('/student/dashboard', (req, res) => {
-    res.render('student/dashboard');
+// Student dashboard - protected route
+router.get('/student/dashboard', protect, async (req, res) => {
+    try {
+        const user = await User.findById(req.user._id);
+        if (!user) {
+            return res.redirect('/student/login');
+        }
+        res.render('student/dashboard', { user });
+    } catch (error) {
+        console.error(error);
+        res.status(500).send('Server Error');
+    }
 });
 
-// Admin dashboard
-router.get('/admin/dashboard', (req, res) => {
-    res.render('admin/dashboard');
+// Admin dashboard - protected route
+router.get('/admin/dashboard', protect, admin, async (req, res) => {
+    try {
+        const user = await User.findById(req.user._id);
+        if (!user) {
+            return res.redirect('/admin/login');
+        }
+        res.render('admin/dashboard', { user });
+    } catch (error) {
+        console.error(error);
+        res.status(500).send('Server Error');
+    }
 });
 
 module.exports = router;
