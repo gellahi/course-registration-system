@@ -1,0 +1,53 @@
+<%- include('../partials/header') %>
+
+    <div class="auth-page">
+        <div class="auth-container">
+            <div class="auth-left">
+                <div class="auth-header">
+                    <img src="/img/logo.svg" alt="Logo" class="auth-logo">
+                    <h1>Student Login</h1>
+                    <p>Welcome back! Please login to your account.</p>
+                </div>
+
+                <form id="studentLoginForm" class="auth-form">
+                    <div class="form-group">
+                        <label for="rollNumber">Roll Number</label>
+                        <div class="input-with-icon">
+                            <i class="fas fa-id-card"></i>
+                            <input type="text" id="rollNumber" name="rollNumber" placeholder="Enter your roll number"
+                                required>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="password">Password</label>
+                        <div class="input-with-icon">
+                            <i class="fas fa-lock"></i>
+                            <input type="password" id="password" name="password" placeholder="Enter your password"
+                                required>
+                        </div>
+                    </div>
+
+                    <div class="form-submit">
+                        <button type="submit" class="btn btn-primary btn-block">Login</button>
+                    </div>
+                </form>
+
+                <div class="auth-footer">
+                    <p>Admin? <a href="/admin/login">Login as administrator</a></p>
+                    <p><a href="/">Back to home</a></p>
+                </div>
+            </div>
+
+            <div class="auth-right">
+                <img src="/img/student-illustration.svg" alt="Student Illustration" class="auth-illustration">
+                <div class="auth-quote">
+                    <p>"Education is the passport to the future, for tomorrow belongs to those who prepare for it
+                        today."</p>
+                    <span>— Malcolm X</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <%- include('../partials/footer', { additionalJS: ['auth'] }) %>

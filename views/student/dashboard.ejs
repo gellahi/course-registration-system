@@ -1,0 +1,144 @@
+<%- include('../partials/header', { additionalCSS: ['dashboard', 'calendar' ] }) %>
+
+    <div class="app-container">
+        <%- include('../partials/sidebar', { path: '/student/dashboard' , user: user }) %>
+
+            <main class="main-content">
+                <%- include('../partials/topbar', { user: user }) %>
+
+                    <div class="dashboard-container">
+                        <div class="dashboard-header">
+                            <h1>My Dashboard</h1>
+                            <p>Welcome back, <%= user.name %>
+                            </p>
+                        </div>
+
+                        <div class="dashboard-stats">
+                            <div class="stat-card">
+                                <div class="stat-icon">
+                                    <i class="fas fa-book"></i>
+                                </div>
+                                <div class="stat-content">
+                                    <h3>My Courses</h3>
+                                    <p class="stat-value" id="courseCount">Loading...</p>
+                                </div>
+                            </div>
+
+                            <div class="stat-card">
+                                <div class="stat-icon">
+                                    <i class="fas fa-clock"></i>
+                                </div>
+                                <div class="stat-content">
+                                    <h3>Credit Hours</h3>
+                                    <p class="stat-value" id="creditHours">Loading...</p>
+                                </div>
+                            </div>
+
+                            <div class="stat-card">
+                                <div class="stat-icon">
+                                    <i class="fas fa-calendar-check"></i>
+                                </div>
+                                <div class="stat-content">
+                                    <h3>Session</h3>
+                                    <p class="stat-value">Spring 2023</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="dashboard-widgets">
+                            <div class="widget widget-large">
+                                <div class="widget-header">
+                                    <h2>Weekly Schedule</h2>
+                                    <a href="/student/schedule" class="btn btn-sm btn-outline">View Full Schedule</a>
+                                </div>
+                                <div class="widget-content">
+                                    <div class="weekly-schedule" id="dashboardSchedule">
+                                        <div class="schedule-loading">
+                                            <div class="spinner"></div>
+                                            <p>Loading your schedule...</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="widget">
+                                <div class="widget-header">
+                                    <h2>Recent Registrations</h2>
+                                    <a href="/student/registrations" class="btn btn-sm btn-outline">View All</a>
+                                </div>
+                                <div class="widget-content">
+                                    <div class="recent-registrations" id="recentRegistrations">
+                                        <div class="loading-spinner">
+                                            <div class="spinner"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="widget">
+                                <div class="widget-header">
+                                    <h2>Upcoming Deadlines</h2>
+                                </div>
+                                <div class="widget-content">
+                                    <div class="deadlines-list">
+                                        <div class="deadline-item">
+                                            <div class="deadline-date">
+                                                <span class="month">May</span>
+                                                <span class="day">15</span>
+                                            </div>
+                                            <div class="deadline-content">
+                                                <h4>Registration Deadline</h4>
+                                                <p>Last day to register for Summer 2023 courses</p>
+                                            </div>
+                                        </div>
+                                        <div class="deadline-item">
+                                            <div class="deadline-date">
+                                                <span class="month">Jun</span>
+                                                <span class="day">01</span>
+                                            </div>
+                                            <div class="deadline-content">
+                                                <h4>Drop/Add Period Ends</h4>
+                                                <p>Last day to modify your course schedule</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="dashboard-actions">
+                            <a href="/student/courses" class="action-card">
+                                <div class="action-icon">
+                                    <i class="fas fa-search"></i>
+                                </div>
+                                <div class="action-content">
+                                    <h3>Find Courses</h3>
+                                    <p>Browse and register for available courses</p>
+                                </div>
+                            </a>
+
+                            <a href="/student/schedule" class="action-card">
+                                <div class="action-icon">
+                                    <i class="fas fa-calendar-alt"></i>
+                                </div>
+                                <div class="action-content">
+                                    <h3>View Schedule</h3>
+                                    <p>See your weekly timetable</p>
+                                </div>
+                            </a>
+
+                            <a href="/student/registrations" class="action-card">
+                                <div class="action-icon">
+                                    <i class="fas fa-clipboard-list"></i>
+                                </div>
+                                <div class="action-content">
+                                    <h3>My Registrations</h3>
+                                    <p>Manage your course registrations</p>
+                                </div>
+                            </a>
+                        </div>
+                    </div>
+            </main>
+    </div>
+
+    <%- include('../partials/footer', { additionalJS: ['dashboard', 'student-dashboard' ] }) %>
