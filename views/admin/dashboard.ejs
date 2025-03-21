@@ -1,0 +1,155 @@
+<%- include('../partials/header', { additionalCSS: ['dashboard', 'calendar' ] }) %>
+
+    <div class="app-container">
+        <%- include('../partials/sidebar', { path: '/admin/dashboard' , user: user }) %>
+
+            <main class="main-content">
+                <%- include('../partials/topbar', { user: user }) %>
+
+                    <div class="dashboard-container">
+                        <div class="dashboard-header">
+                            <h1>Admin Dashboard</h1>
+                            <p>Welcome back, <%= user.name %>
+                            </p>
+                        </div>
+
+                        <div class="dashboard-stats">
+                            <div class="stat-card">
+                                <div class="stat-icon" style="background-color: var(--primary-light);">
+                                    <i class="fas fa-user-graduate"></i>
+                                </div>
+                                <div class="stat-content">
+                                    <h3>Total Students</h3>
+                                    <p class="stat-value" id="studentCount">Loading...</p>
+                                </div>
+                            </div>
+
+                            <div class="stat-card">
+                                <div class="stat-icon" style="background-color: var(--info-color);">
+                                    <i class="fas fa-book"></i>
+                                </div>
+                                <div class="stat-content">
+                                    <h3>Courses</h3>
+                                    <p class="stat-value" id="courseCount">Loading...</p>
+                                </div>
+                            </div>
+
+                            <div class="stat-card">
+                                <div class="stat-icon" style="background-color: var(--success-color);">
+                                    <i class="fas fa-clipboard-check"></i>
+                                </div>
+                                <div class="stat-content">
+                                    <h3>Registrations</h3>
+                                    <p class="stat-value" id="registrationCount">Loading...</p>
+                                </div>
+                            </div>
+
+                            <div class="stat-card">
+                                <div class="stat-icon" style="background-color: var(--warning-color);">
+                                    <i class="fas fa-exclamation-triangle"></i>
+                                </div>
+                                <div class="stat-content">
+                                    <h3>Prerequisite Issues</h3>
+                                    <p class="stat-value" id="issueCount">Loading...</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="dashboard-widgets">
+                            <div class="widget widget-large">
+                                <div class="widget-header">
+                                    <h2>Recent Course Registrations</h2>
+                                    <a href="/admin/registrations" class="btn btn-sm btn-outline">View All</a>
+                                </div>
+                                <div class="widget-content">
+                                    <div id="recentRegistrations">
+                                        <div class="loading-spinner">
+                                            <div class="spinner"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="widget">
+                                <div class="widget-header">
+                                    <h2>Courses with Low Seats</h2>
+                                    <a href="/admin/courses" class="btn btn-sm btn-outline">Manage Courses</a>
+                                </div>
+                                <div class="widget-content">
+                                    <div id="lowSeatsCourses">
+                                        <div class="loading-spinner">
+                                            <div class="spinner"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="widget">
+                                <div class="widget-header">
+                                    <h2>System Alerts</h2>
+                                </div>
+                                <div class="widget-content">
+                                    <div class="alerts-list">
+                                        <div class="alert-item">
+                                            <div class="alert-icon warning">
+                                                <i class="fas fa-exclamation-circle"></i>
+                                            </div>
+                                            <div class="alert-content">
+                                                <h4>Prerequisite Issues Detected</h4>
+                                                <p>Some students are registered for courses without completing
+                                                    prerequisites.</p>
+                                                <a href="/admin/reports/prerequisite-issues" class="alert-link">View
+                                                    Report</a>
+                                            </div>
+                                        </div>
+                                        <div class="alert-item">
+                                            <div class="alert-icon info">
+                                                <i class="fas fa-info-circle"></i>
+                                            </div>
+                                            <div class="alert-content">
+                                                <h4>Registration Period Active</h4>
+                                                <p>The course registration period for Summer 2023 is currently active.
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="dashboard-actions">
+                            <a href="/admin/courses/create" class="action-card">
+                                <div class="action-icon" style="background-color: var(--info-color);">
+                                    <i class="fas fa-plus"></i>
+                                </div>
+                                <div class="action-content">
+                                    <h3>Add New Course</h3>
+                                    <p>Create a new course in the system</p>
+                                </div>
+                            </a>
+
+                            <a href="/admin/students/create" class="action-card">
+                                <div class="action-icon" style="background-color: var(--primary-light);">
+                                    <i class="fas fa-user-plus"></i>
+                                </div>
+                                <div class="action-content">
+                                    <h3>Add Student</h3>
+                                    <p>Register a new student in the system</p>
+                                </div>
+                            </a>
+
+                            <a href="/admin/reports" class="action-card">
+                                <div class="action-icon" style="background-color: var(--success-color);">
+                                    <i class="fas fa-chart-bar"></i>
+                                </div>
+                                <div class="action-content">
+                                    <h3>Generate Reports</h3>
+                                    <p>View and generate system reports</p>
+                                </div>
+                            </a>
+                        </div>
+                    </div>
+            </main>
+    </div>
+
+    <%- include('../partials/footer', { additionalJS: ['dashboard', 'admin-dashboard' ] }) %>

@@ -1,0 +1,51 @@
+<%- include('../partials/header') %>
+
+    <div class="auth-page">
+        <div class="auth-container">
+            <div class="auth-left">
+                <div class="auth-header">
+                    <img src="/img/logo.svg" alt="Logo" class="auth-logo">
+                    <h1>Admin Login</h1>
+                    <p>Welcome back! Please login to your administrator account.</p>
+                </div>
+
+                <form id="adminLoginForm" class="auth-form">
+                    <div class="form-group">
+                        <label for="username">Username</label>
+                        <div class="input-with-icon">
+                            <i class="fas fa-user"></i>
+                            <input type="text" id="username" name="username" placeholder="Enter your username" required>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="password">Password</label>
+                        <div class="input-with-icon">
+                            <i class="fas fa-lock"></i>
+                            <input type="password" id="password" name="password" placeholder="Enter your password"
+                                required>
+                        </div>
+                    </div>
+
+                    <div class="form-submit">
+                        <button type="submit" class="btn btn-primary btn-block">Login</button>
+                    </div>
+                </form>
+
+                <div class="auth-footer">
+                    <p>Student? <a href="/student/login">Login as student</a></p>
+                    <p><a href="/">Back to home</a></p>
+                </div>
+            </div>
+
+            <div class="auth-right admin-auth-right">
+                <img src="/img/admin-illustration.svg" alt="Admin Illustration" class="auth-illustration">
+                <div class="auth-quote">
+                    <p>"The function of education is to teach one to think intensively and to think critically."</p>
+                    <span>— Martin Luther King Jr.</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <%- include('../partials/footer', { additionalJS: ['auth'] }) %>
