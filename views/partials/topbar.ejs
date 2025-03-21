@@ -1,0 +1,22 @@
+<div class="topbar">
+    <div class="topbar-left">
+        <button class="menu-toggle">
+            <i class="fas fa-bars"></i>
+        </button>
+    </div>
+    <div class="topbar-right">
+        <% if (user) { %>
+            <div class="user-info">
+                <span class="user-name">
+                    <%= user.name %>
+                </span>
+                <span class="user-role">
+                    <%= user.role==='admin' ? 'Administrator' : 'Student' %>
+                </span>
+            </div>
+            <div class="user-avatar">
+                <img src="/img/avatar.svg" alt="User Avatar">
+            </div>
+            <% } %>
+    </div>
+</div>
