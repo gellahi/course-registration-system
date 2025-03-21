@@ -1,0 +1,30 @@
+<%- include('../partials/header', { additionalCSS: ['dashboard'] }) %>
+
+    <div class="app-container">
+        <%- include('../partials/sidebar', { path: '/admin/students' , user: user }) %>
+
+            <main class="main-content">
+                <%- include('../partials/topbar', { user: user }) %>
+
+                    <div class="container">
+                        <div class="page-header">
+                            <h1>Manage Students</h1>
+                            <p>View and manage student accounts</p>
+                            <a href="/admin/students/create" class="btn btn-primary">
+                                <i class="fas fa-plus"></i> Add New Student
+                            </a>
+                        </div>
+
+                        <div class="students-manager">
+                            <div class="loading-indicator" id="studentsLoading">
+                                <div class="spinner"></div>
+                                <p>Loading students...</p>
+                            </div>
+
+                            <div class="admin-table-container" id="studentsTable"></div>
+                        </div>
+                    </div>
+            </main>
+    </div>
+
+    <%- include('../partials/footer', { additionalJS: ['admin-students'] }) %>

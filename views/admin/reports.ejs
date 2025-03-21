@@ -1,0 +1,58 @@
+<%- include('../partials/header', { additionalCSS: ['dashboard'] }) %>
+
+    <div class="app-container">
+        <%- include('../partials/sidebar', { path: '/admin/reports' , user: user }) %>
+
+            <main class="main-content">
+                <%- include('../partials/topbar', { user: user }) %>
+
+                    <div class="container">
+                        <div class="page-header">
+                            <h1>Reports</h1>
+                            <p>View and generate system reports</p>
+                        </div>
+
+                        <div class="reports-grid">
+                            <div class="report-card">
+                                <div class="report-icon">
+                                    <i class="fas fa-users"></i>
+                                </div>
+                                <div class="report-content">
+                                    <h3>Course Enrollment Report</h3>
+                                    <p>See which students are enrolled in specific courses</p>
+                                    <a href="#" class="btn btn-sm btn-outline" id="courseEnrollmentReportBtn">Generate
+                                        Report</a>
+                                </div>
+                            </div>
+
+                            <div class="report-card">
+                                <div class="report-icon">
+                                    <i class="fas fa-check-circle"></i>
+                                </div>
+                                <div class="report-content">
+                                    <h3>Available Courses Report</h3>
+                                    <p>View courses with available seats</p>
+                                    <a href="#" class="btn btn-sm btn-outline" id="availableCoursesReportBtn">Generate
+                                        Report</a>
+                                </div>
+                            </div>
+
+                            <div class="report-card">
+                                <div class="report-icon">
+                                    <i class="fas fa-exclamation-triangle"></i>
+                                </div>
+                                <div class="report-content">
+                                    <h3>Prerequisite Issues Report</h3>
+                                    <p>Find students enrolled without meeting prerequisites</p>
+                                    <a href="#" class="btn btn-sm btn-outline" id="prerequisiteIssuesReportBtn">Generate
+                                        Report</a>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="report-results" id="reportResults" style="display: none;"></div>
+                    </div>
+            </main>
+    </div>
+
+    <%- include('../partials/footer', { additionalJS: ['admin-reports'] }) %>

@@ -1,0 +1,49 @@
+<%- include('../../partials/header', { additionalCSS: ['dashboard'] }) %>
+
+    <div class="app-container">
+        <%- include('../../partials/sidebar', { path: '/admin/students' , user: user }) %>
+
+            <main class="main-content">
+                <%- include('../../partials/topbar', { user: user }) %>
+
+                    <div class="container">
+                        <div class="page-header">
+                            <h1>Add New Student</h1>
+                            <p>Create a new student account</p>
+                        </div>
+
+                        <div class="card">
+                            <div class="card-body">
+                                <form id="studentForm">
+                                    <div class="form-row">
+                                        <div class="form-group col-md-6">
+                                            <label for="rollNumber">Roll Number</label>
+                                            <input type="text" id="rollNumber" name="rollNumber" class="form-control"
+                                                required>
+                                        </div>
+                                        <div class="form-group col-md-6">
+                                            <label for="name">Full Name</label>
+                                            <input type="text" id="name" name="name" class="form-control" required>
+                                        </div>
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label for="password">Password</label>
+                                        <input type="password" id="password" name="password" class="form-control"
+                                            required>
+                                        <small class="form-text text-muted">This will be the initial password. Student
+                                            can change it later.</small>
+                                    </div>
+
+                                    <div class="form-actions">
+                                        <button type="submit" class="btn btn-primary">Create Student</button>
+                                        <a href="/admin/students" class="btn btn-outline">Cancel</a>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+            </main>
+    </div>
+
+    <%- include('../../partials/footer', { additionalJS: ['admin-student-form'] }) %>

@@ -1,0 +1,27 @@
+<%- include('../partials/header', { additionalCSS: ['dashboard'] }) %>
+
+    <div class="app-container">
+        <%- include('../partials/sidebar', { path: '/student/registrations' , user: user }) %>
+
+            <main class="main-content">
+                <%- include('../partials/topbar', { user: user }) %>
+
+                    <div class="container">
+                        <div class="page-header">
+                            <h1>My Registrations</h1>
+                            <p>Manage your course registrations</p>
+                        </div>
+
+                        <div class="registrations-container">
+                            <div class="loading-indicator" id="registrationsLoading">
+                                <div class="spinner"></div>
+                                <p>Loading your registrations...</p>
+                            </div>
+
+                            <div id="registrationsList"></div>
+                        </div>
+                    </div>
+            </main>
+    </div>
+
+    <%- include('../partials/footer', { additionalJS: ['student-registrations'] }) %>

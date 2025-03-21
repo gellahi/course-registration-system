@@ -1,0 +1,30 @@
+<%- include('../partials/header', { additionalCSS: ['dashboard'] }) %>
+
+    <div class="app-container">
+        <%- include('../partials/sidebar', { path: '/admin/courses' , user: user }) %>
+
+            <main class="main-content">
+                <%- include('../partials/topbar', { user: user }) %>
+
+                    <div class="container">
+                        <div class="page-header">
+                            <h1>Manage Courses</h1>
+                            <p>Add, edit, or delete courses in the system</p>
+                            <a href="/admin/courses/create" class="btn btn-primary">
+                                <i class="fas fa-plus"></i> Add New Course
+                            </a>
+                        </div>
+
+                        <div class="courses-manager">
+                            <div class="loading-indicator" id="coursesLoading">
+                                <div class="spinner"></div>
+                                <p>Loading courses...</p>
+                            </div>
+
+                            <div class="admin-table-container" id="coursesTable"></div>
+                        </div>
+                    </div>
+            </main>
+    </div>
+
+    <%- include('../partials/footer', { additionalJS: ['admin-courses'] }) %>

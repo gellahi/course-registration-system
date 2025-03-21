@@ -1,0 +1,77 @@
+-<%- include('../partials/header', { additionalCSS: ['dashboard'] }) %>
+
+    <div class="app-container">
+        <%- include('../partials/sidebar', { path: '/student/courses' , user: user }) %>
+
+            <main class="main-content">
+                <%- include('../partials/topbar', { user: user }) %>
+
+                    <div class="container">
+                        <div class="page-header">
+                            <h1>Course Catalog</h1>
+                            <p>Browse and register for available courses</p>
+                        </div>
+
+                        <div class="course-filters">
+                            <div class="filters-container">
+                                <div class="filter-group">
+                                    <label for="departmentFilter">Department</label>
+                                    <select id="departmentFilter" class="form-control">
+                                        <option value="">All Departments</option>
+                                        <option value="CSE">Computer Science</option>
+                                        <option value="EE">Electrical Engineering</option>
+                                        <option value="MTH">Mathematics</option>
+                                        <option value="PHY">Physics</option>
+                                    </select>
+                                </div>
+
+                                <div class="filter-group">
+                                    <label for="levelFilter">Level</label>
+                                    <select id="levelFilter" class="form-control">
+                                        <option value="">All Levels</option>
+                                        <option value="100">100 Level</option>
+                                        <option value="200">200 Level</option>
+                                        <option value="300">300 Level</option>
+                                        <option value="400">400 Level</option>
+                                    </select>
+                                </div>
+
+                                <div class="filter-group">
+                                    <label for="dayFilter">Day</label>
+                                    <select id="dayFilter" class="form-control">
+                                        <option value="">Any Day</option>
+                                        <option value="Monday">Monday</option>
+                                        <option value="Tuesday">Tuesday</option>
+                                        <option value="Wednesday">Wednesday</option>
+                                        <option value="Thursday">Thursday</option>
+                                        <option value="Friday">Friday</option>
+                                    </select>
+                                </div>
+
+                                <div class="filter-group">
+                                    <label for="seatsFilter">Seats</label>
+                                    <select id="seatsFilter" class="form-control">
+                                        <option value="0">All Courses</option>
+                                        <option value="1">Available Seats</option>
+                                    </select>
+                                </div>
+
+                                <div class="filter-group filter-actions">
+                                    <button id="resetFilters" class="btn btn-outline">Reset Filters</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="courses-container">
+                            <div class="loading-indicator" id="coursesLoading">
+                                <div class="spinner"></div>
+                                <p>Loading courses...</p>
+                            </div>
+
+                            <div class="courses-grid" id="coursesGrid"></div>
+                        </div>
+                    </div>
+            </main>
+    </div>
+
+    <%- include('../partials/footer', { additionalJS: ['student-courses'] }) %>

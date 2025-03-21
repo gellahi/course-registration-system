@@ -1,0 +1,130 @@
+<%- include('../../partials/header', { additionalCSS: ['dashboard'] }) %>
+
+    <div class="app-container">
+        <%- include('../../partials/sidebar', { path: '/admin/courses' , user: user }) %>
+
+            <main class="main-content">
+                <%- include('../../partials/topbar', { user: user }) %>
+
+                    <div class="container">
+                        <div class="page-header">
+                            <h1>Add New Course</h1>
+                            <p>Create a new course in the system</p>
+                        </div>
+
+                        <div class="card">
+                            <div class="card-body">
+                                <form id="courseForm">
+                                    <div class="form-row">
+                                        <div class="form-group col-md-6">
+                                            <label for="courseCode">Course Code</label>
+                                            <input type="text" id="courseCode" name="courseCode" class="form-control"
+                                                required>
+                                        </div>
+                                        <div class="form-group col-md-6">
+                                            <label for="title">Course Title</label>
+                                            <input type="text" id="title" name="title" class="form-control" required>
+                                        </div>
+                                    </div>
+
+                                    <div class="form-row">
+                                        <div class="form-group col-md-4">
+                                            <label for="department">Department</label>
+                                            <select id="department" name="department" class="form-control" required>
+                                                <option value="">Select Department</option>
+                                                <option value="CSE">Computer Science</option>
+                                                <option value="EE">Electrical Engineering</option>
+                                                <option value="MTH">Mathematics</option>
+                                                <option value="PHY">Physics</option>
+                                            </select>
+                                        </div>
+                                        <div class="form-group col-md-4">
+                                            <label for="level">Level</label>
+                                            <select id="level" name="level" class="form-control" required>
+                                                <option value="">Select Level</option>
+                                                <option value="100">100 Level</option>
+                                                <option value="200">200 Level</option>
+                                                <option value="300">300 Level</option>
+                                                <option value="400">400 Level</option>
+                                            </select>
+                                        </div>
+                                        <div class="form-group col-md-4">
+                                            <label for="creditHours">Credit Hours</label>
+                                            <input type="number" id="creditHours" name="creditHours"
+                                                class="form-control" min="1" max="6" required>
+                                        </div>
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label for="description">Description</label>
+                                        <textarea id="description" name="description" class="form-control"
+                                            rows="3"></textarea>
+                                    </div>
+
+                                    <div class="form-row">
+                                        <div class="form-group col-md-6">
+                                            <label for="totalSeats">Total Seats</label>
+                                            <input type="number" id="totalSeats" name="totalSeats" class="form-control"
+                                                min="1" required>
+                                        </div>
+                                        <div class="form-group col-md-6">
+                                            <label for="prerequisites">Prerequisites</label>
+                                            <select id="prerequisites" name="prerequisites" class="form-control"
+                                                multiple>
+                                                <!-- Will be populated dynamically -->
+                                            </select>
+                                        </div>
+                                    </div>
+
+                                    <div class="schedule-section">
+                                        <h3>Course Schedule</h3>
+                                        <div id="scheduleEntries">
+                                            <div class="schedule-entry">
+                                                <div class="form-row">
+                                                    <div class="form-group col-md-3">
+                                                        <label for="day-0">Day</label>
+                                                        <select id="day-0" name="schedule[0][day]" class="form-control"
+                                                            required>
+                                                            <option value="">Select Day</option>
+                                                            <option value="Monday">Monday</option>
+                                                            <option value="Tuesday">Tuesday</option>
+                                                            <option value="Wednesday">Wednesday</option>
+                                                            <option value="Thursday">Thursday</option>
+                                                            <option value="Friday">Friday</option>
+                                                        </select>
+                                                    </div>
+                                                    <div class="form-group col-md-3">
+                                                        <label for="startTime-0">Start Time</label>
+                                                        <input type="time" id="startTime-0"
+                                                            name="schedule[0][startTime]" class="form-control" required>
+                                                    </div>
+                                                    <div class="form-group col-md-3">
+                                                        <label for="endTime-0">End Time</label>
+                                                        <input type="time" id="endTime-0" name="schedule[0][endTime]"
+                                                            class="form-control" required>
+                                                    </div>
+                                                    <div class="form-group col-md-3">
+                                                        <label for="room-0">Room</label>
+                                                        <input type="text" id="room-0" name="schedule[0][room]"
+                                                            class="form-control" required>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <button type="button" id="addScheduleEntry" class="btn btn-sm btn-outline">
+                                            <i class="fas fa-plus"></i> Add Another Time Slot
+                                        </button>
+                                    </div>
+
+                                    <div class="form-actions">
+                                        <button type="submit" class="btn btn-primary">Create Course</button>
+                                        <a href="/admin/courses" class="btn btn-outline">Cancel</a>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+            </main>
+    </div>
+
+    <%- include('../../partials/footer', { additionalJS: ['admin-course-form'] }) %>
