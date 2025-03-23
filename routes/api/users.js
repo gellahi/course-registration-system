@@ -18,4 +18,10 @@ router.post('/create-student', protect, admin, userController.createStudent);
 // Create admin (admin only)
 router.post('/create-admin', protect, admin, userController.createAdmin);
 
+// Get users by role
+router.get('/', protect, admin, userController.getUsers);
+
+// Get user count
+router.get('/count', protect, admin, userController.getUserCount);
+
 module.exports = router;

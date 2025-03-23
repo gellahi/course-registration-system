@@ -139,3 +139,53 @@ exports.getPrerequisiteIssuesReport = async (req, res) => {
         res.status(500).json({ success: false, error: error.message });
     }
 };
+
+// @desc    Get prerequisite issues count
+// @route   GET /api/reports/prerequisite-issues/count
+// @access  Private/Admin
+exports.getPrerequisiteIssuesCount = async (req, res) => {
+    try {
+        // Get all registrations
+        const registrations = await Registration.find({
+            status: 'approved'
+        }).populate('student', 'name rollNumber')
+            .populate({
+                path: 'course',
+                populate: { path: 'prerequisites' }
+            });
+
+        let issueCount = 0;
+
+        // Check each registration for prerequisite issues
+        for (const registration of registrations) {
+            if (!registration.course.prerequisites || registration.course.prerequisites.length === 0) {
+                continue;
+            }
+
+            const studentId = registration.student._id;
+            const course = registration.course;
+
+            // Get all completed courses for the student
+            const completedRegistrations = await Registration.find({
+                student: studentId,
+                status: 'approved',
+                _id: { $ne: registration._id } // Exclude current registration
+            }).select('course');
+
+            const completedCourseIds = completedRegistrations.map(reg => reg.course.toString());
+
+            // Check if all prerequisites are met
+            const unmetPrerequisites = course.prerequisites.filter(
+                prereq => !completedCourseIds.includes(prereq._id.toString())
+            );
+
+            if (unmetPrerequisites.length > 0) {
+                issueCount++;
+            }
+        }
+
+        res.json({ success: true, count: issueCount });
+    } catch (error) {
+        res.status(500).json({ success: false, error: error.message });
+    }
+};

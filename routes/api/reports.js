@@ -12,4 +12,7 @@ router.get('/available-courses', protect, admin, reportController.getAvailableCo
 // Prerequisite issues report
 router.get('/prerequisite-issues', protect, admin, reportController.getPrerequisiteIssuesReport);
 
+// Get prerequisite issues count
+router.get('/prerequisite-issues/count', protect, admin, reportController.getPrerequisiteIssuesCount);
+
 module.exports = router;

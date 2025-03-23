@@ -208,3 +208,56 @@ exports.getUserProfile = async (req, res) => {
         res.status(500).json({ success: false, error: error.message });
     }
 };
+
+// @desc    Get users by role
+// @route   GET /api/users
+// @access  Private/Admin
+exports.getUsers = async (req, res) => {
+    try {
+        const { role } = req.query;
+        const filter = {};
+        
+        if (role) {
+            filter.role = role;
+        }
+        
+        const users = await User.find(filter)
+            .populate({
+                path: 'registeredCourses',
+                select: '_id'
+            });
+
+        // Format the response to include the count of registered courses
+        const formattedUsers = users.map(user => ({
+            _id: user._id,
+            name: user.name,
+            rollNumber: user.rollNumber,
+            role: user.role,
+            registeredCourses: user.registeredCourses || []
+        }));
+        
+        res.json({ success: true, users: formattedUsers });
+    } catch (error) {
+        res.status(500).json({ success: false, error: error.message });
+    }
+};
+
+// @desc    Get user count by role
+// @route   GET /api/users/count
+// @access  Private/Admin
+exports.getUserCount = async (req, res) => {
+    try {
+        const { role } = req.query;
+        const filter = {};
+        
+        if (role) {
+            filter.role = role;
+        }
+        
+        const count = await User.countDocuments(filter);
+        
+        res.json({ success: true, count });
+    } catch (error) {
+        res.status(500).json({ success: false, error: error.message });
+    }
+};

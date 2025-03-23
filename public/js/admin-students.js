@@ -2,14 +2,14 @@ document.addEventListener('DOMContentLoaded', function () {
     fetchStudents();
 });
 
+// Replace the fetchStudents function
 function fetchStudents() {
     // Show loading
     document.getElementById('studentsLoading').style.display = 'flex';
     document.getElementById('studentsTable').innerHTML = '';
 
-    // In a real app, you would fetch from a students API endpoint
-    // For now, we'll use the user profile endpoint to simulate
-    fetch('/api/users/profile', {
+    // Fetch students from API
+    fetch('/api/users?role=student', {
         headers: {
             'Authorization': `Bearer ${localStorage.getItem('token')}`
         }
@@ -19,16 +19,11 @@ function fetchStudents() {
             // Hide loading
             document.getElementById('studentsLoading').style.display = 'none';
 
-            // Simulate student data
-            // In a real app, you'd use a proper admin endpoint to get all students
-            const students = [
-                { _id: '1', name: 'Gohar Ellahi', rollNumber: '22F-3636', registeredCourses: [] },
-                { _id: '2', name: 'Ahmed Khan', rollNumber: '22F-1234', registeredCourses: [] },
-                { _id: '3', name: 'Fatima Ali', rollNumber: '22F-5678', registeredCourses: [] },
-                { _id: '4', name: 'Mohammad Rizwan', rollNumber: '22F-9012', registeredCourses: [] }
-            ];
-
-            renderStudentsTable(students);
+            if (data.success) {
+                renderStudentsTable(data.users);
+            } else {
+                showToast('Failed to load students', 'error');
+            }
         })
         .catch(error => {
             document.getElementById('studentsLoading').style.display = 'none';

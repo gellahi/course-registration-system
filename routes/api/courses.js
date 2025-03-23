@@ -17,4 +17,7 @@ router.route('/:id')
 // Subscribe to course notifications
 router.post('/:id/subscribe', protect, courseController.subscribeToCourse);
 
+// Get course count
+router.get('/count', courseController.getCourseCount);
+
 module.exports = router;

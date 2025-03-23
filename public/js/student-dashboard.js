@@ -9,50 +9,87 @@ document.addEventListener('DOMContentLoaded', function () {
     initializeSchedule();
 });
 
-// Fetch course count and credit hours
+// Replace the fetchDashboardStats function
 function fetchDashboardStats() {
-    // In a real implementation, this would be an API call
-    // For demo purposes, we'll use setTimeout to simulate an API call
-    setTimeout(() => {
-        document.getElementById('courseCount').textContent = '5';
-        document.getElementById('creditHours').textContent = '16';
-    }, 1000);
+    fetch('/api/registrations/my', {
+        headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+    })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Count approved registrations
+                const approvedRegistrations = data.registrations.filter(reg => reg.status === 'approved');
+                document.getElementById('courseCount').textContent = approvedRegistrations.length;
+
+                // Calculate total credit hours
+                const totalCredits = approvedRegistrations.reduce((total, reg) =>
+                    total + (reg.course ? reg.course.creditHours : 0), 0);
+                document.getElementById('creditHours').textContent = totalCredits;
+            } else {
+                showToast('Failed to load dashboard stats', 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showToast('An error occurred while loading dashboard stats', 'error');
+        });
 }
 
-// Fetch recent course registrations
+// Replace the fetchRecentRegistrations function
 function fetchRecentRegistrations() {
-    // Simulate API call with setTimeout
-    setTimeout(() => {
-        const container = document.getElementById('recentRegistrations');
+    fetch('/api/registrations/my', {
+        headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+    })
+        .then(response => response.json())
+        .then(data => {
+            const container = document.getElementById('recentRegistrations');
+            container.innerHTML = '';
 
-        // Sample data
-        const registrations = [
-            { courseCode: 'CSE301', courseName: 'Database Systems', status: 'approved', date: '2023-05-10' },
-            { courseCode: 'CSE401', courseName: 'Artificial Intelligence', status: 'pending', date: '2023-05-09' },
-            { courseCode: 'MTH201', courseName: 'Calculus II', status: 'approved', date: '2023-05-08' }
-        ];
+            if (data.success && data.registrations.length > 0) {
+                // Sort by registration date (most recent first)
+                const sortedRegistrations = data.registrations
+                    .slice()
+                    .sort((a, b) => new Date(b.registrationDate) - new Date(a.registrationDate))
+                    .slice(0, 3); // Take only the 3 most recent
 
-        // Clear loading spinner
-        container.innerHTML = '';
+                sortedRegistrations.forEach(reg => {
+                    const regItem = document.createElement('div');
+                    regItem.className = 'registration-item';
 
-        registrations.forEach(reg => {
-            const regItem = document.createElement('div');
-            regItem.className = 'registration-item';
+                    const statusClass = `status-${reg.status}`;
 
-            const statusClass = `status-${reg.status}`;
+                    regItem.innerHTML = `
+                    <div class="course-code">${reg.course.courseCode}</div>
+                    <div class="registration-details">
+                        <h4>${reg.course.title}</h4>
+                        <p>Registered on ${new Date(reg.registrationDate).toLocaleDateString()}</p>
+                    </div>
+                    <span class="registration-status ${statusClass}">${reg.status}</span>
+                `;
 
-            regItem.innerHTML = `
-                <div class="course-code">${reg.courseCode}</div>
-                <div class="registration-details">
-                    <h4>${reg.courseName}</h4>
-                    <p>Registered on ${new Date(reg.date).toLocaleDateString()}</p>
+                    container.appendChild(regItem);
+                });
+            } else {
+                container.innerHTML = `
+                <div class="empty-state-small">
+                    <p>No registrations found</p>
+                    <a href="/student/courses" class="btn btn-sm btn-outline">Browse Courses</a>
                 </div>
-                <span class="registration-status ${statusClass}">${reg.status}</span>
             `;
-
-            container.appendChild(regItem);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            document.getElementById('recentRegistrations').innerHTML = `
+            <div class="error-state">
+                <p>Failed to load registrations</p>
+            </div>
+        `;
         });
-    }, 1500);
 }
 
 // Initialize weekly schedule

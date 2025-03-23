@@ -16,4 +16,7 @@ router.route('/:id')
     .put(protect, admin, registrationController.updateRegistrationStatus)
     .delete(protect, registrationController.cancelRegistration);
 
+// Get registration count
+router.get('/count', protect, admin, registrationController.getRegistrationCount);    
+
 module.exports = router;

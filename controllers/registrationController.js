@@ -244,3 +244,16 @@ function convertTimeToMinutes(timeString) {
     const [hours, minutes] = timeString.split(':').map(Number);
     return hours * 60 + minutes;
 }
+
+// @desc    Get registration count
+// @route   GET /api/registrations/count
+// @access  Private/Admin
+exports.getRegistrationCount = async (req, res) => {
+    try {
+        const count = await Registration.countDocuments();
+
+        res.json({ success: true, count });
+    } catch (error) {
+        res.status(500).json({ success: false, error: error.message });
+    }
+};
