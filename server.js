@@ -28,7 +28,8 @@ app.use('/api/users', require('./routes/api/users'));
 app.use('/api/courses', require('./routes/api/courses'));
 app.use('/api/registrations', require('./routes/api/registrations'));
 app.use('/api/reports', require('./routes/api/reports'));
-app.use('/api/seed', require('./routes/api/seed'));
+app.use('/api/seed', require('./routes/api/seed'));;
+app.use('/api/config', require('./routes/api/config'));
 app.use('/', require('./routes/index'));
 
 // Define port

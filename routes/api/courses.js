@@ -8,6 +8,8 @@ router.route('/')
     .get(courseController.getCourses)
     .post(protect, admin, courseController.createCourse);
 
+router.get('/count', courseController.getCourseCount);
+
 // Get, update, delete course by ID
 router.route('/:id')
     .get(courseController.getCourseById)
@@ -16,8 +18,5 @@ router.route('/:id')
 
 // Subscribe to course notifications
 router.post('/:id/subscribe', protect, courseController.subscribeToCourse);
-
-// Get course count
-router.get('/count', courseController.getCourseCount);
 
 module.exports = router;

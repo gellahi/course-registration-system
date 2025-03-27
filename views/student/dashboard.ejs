@@ -40,7 +40,7 @@
                                 </div>
                                 <div class="stat-content">
                                     <h3>Session</h3>
-                                    <p class="stat-value">Spring 2023</p>
+                                    <p class="stat-value" id="currentSession">Loading...</p>
                                 </div>
                             </div>
                         </div>
@@ -80,26 +80,9 @@
                                     <h2>Upcoming Deadlines</h2>
                                 </div>
                                 <div class="widget-content">
-                                    <div class="deadlines-list">
-                                        <div class="deadline-item">
-                                            <div class="deadline-date">
-                                                <span class="month">May</span>
-                                                <span class="day">15</span>
-                                            </div>
-                                            <div class="deadline-content">
-                                                <h4>Registration Deadline</h4>
-                                                <p>Last day to register for Summer 2023 courses</p>
-                                            </div>
-                                        </div>
-                                        <div class="deadline-item">
-                                            <div class="deadline-date">
-                                                <span class="month">Jun</span>
-                                                <span class="day">01</span>
-                                            </div>
-                                            <div class="deadline-content">
-                                                <h4>Drop/Add Period Ends</h4>
-                                                <p>Last day to modify your course schedule</p>
-                                            </div>
+                                    <div class="deadlines-list" id="deadlinesList">
+                                        <div class="loading-spinner">
+                                            <div class="spinner"></div>
                                         </div>
                                     </div>
                                 </div>

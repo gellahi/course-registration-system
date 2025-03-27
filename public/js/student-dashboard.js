@@ -1,13 +1,95 @@
+// Add these functions and call them in the DOMContentLoaded event
 document.addEventListener('DOMContentLoaded', function () {
     // Fetch dashboard data
     fetchDashboardStats();
 
+    // Fetch current session
+    fetchCurrentSession();
+
     // Fetch recent registrations
     fetchRecentRegistrations();
+
+    // Fetch deadlines
+    fetchDeadlines();
 
     // Initialize dashboard schedule
     initializeSchedule();
 });
+
+// Add this function to fetch current session
+function fetchCurrentSession() {
+    fetch('/api/config/session', {
+        headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+    })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                document.getElementById('currentSession').textContent = data.session;
+            } else {
+                document.getElementById('currentSession').textContent = 'Unknown';
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            document.getElementById('currentSession').textContent = 'Unknown';
+        });
+}
+
+// Add this function to fetch deadlines
+function fetchDeadlines() {
+    fetch('/api/config/deadlines', {
+        headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+    })
+        .then(response => response.json())
+        .then(data => {
+            const container = document.getElementById('deadlinesList');
+
+            if (data.success && data.deadlines.length > 0) {
+                container.innerHTML = '';
+
+                // Display up to 3 deadlines
+                const displayDeadlines = data.deadlines.slice(0, 3);
+
+                displayDeadlines.forEach(deadline => {
+                    const date = new Date(deadline.date);
+                    const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+                    const deadlineItem = document.createElement('div');
+                    deadlineItem.className = 'deadline-item';
+                    deadlineItem.innerHTML = `
+                    <div class="deadline-date">
+                        <span class="month">${monthNames[date.getMonth()]}</span>
+                        <span class="day">${date.getDate()}</span>
+                    </div>
+                    <div class="deadline-content">
+                        <h4>${deadline.title}</h4>
+                        <p>${deadline.description}</p>
+                    </div>
+                `;
+
+                    container.appendChild(deadlineItem);
+                });
+            } else {
+                container.innerHTML = `
+                <div class="empty-state-small">
+                    <p>No upcoming deadlines</p>
+                </div>
+            `;
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            document.getElementById('deadlinesList').innerHTML = `
+            <div class="error-state">
+                <p>Failed to load deadlines</p>
+            </div>
+        `;
+        });
+}
 
 // Replace the fetchDashboardStats function
 function fetchDashboardStats() {
@@ -91,153 +173,135 @@ function fetchRecentRegistrations() {
         `;
         });
 }
-
-// Initialize weekly schedule
+// Replace the initializeSchedule function with this improved version
 function initializeSchedule() {
-    // Simulate API call with setTimeout
-    setTimeout(() => {
-        const scheduleContainer = document.getElementById('dashboardSchedule');
+    const scheduleContainer = document.getElementById('dashboardSchedule');
 
-        // Sample schedule data
-        const courses = [
-            {
-                id: 1,
-                code: 'CSE301',
-                name: 'Database Systems',
-                schedule: [
-                    { day: 'Monday', startTime: '10:00', endTime: '11:30', room: 'A-101' },
-                    { day: 'Wednesday', startTime: '10:00', endTime: '11:30', room: 'A-101' }
-                ],
-                color: 'course-color-1'
-            },
-            {
-                id: 2,
-                code: 'MTH201',
-                name: 'Calculus II',
-                schedule: [
-                    { day: 'Tuesday', startTime: '13:00', endTime: '14:30', room: 'B-203' },
-                    { day: 'Thursday', startTime: '13:00', endTime: '14:30', room: 'B-203' }
-                ],
-                color: 'course-color-2'
-            },
-            {
-                id: 3,
-                code: 'CSE401',
-                name: 'Artificial Intelligence',
-                schedule: [
-                    { day: 'Monday', startTime: '14:00', endTime: '15:30', room: 'C-105' },
-                    { day: 'Wednesday', startTime: '14:00', endTime: '15:30', room: 'C-105' }
-                ],
-                color: 'course-color-3'
+    // Show loading state
+    scheduleContainer.innerHTML = `
+        <div class="schedule-loading">
+            <div class="spinner"></div>
+            <p>Loading your schedule...</p>
+        </div>
+    `;
+
+    // Fetch registrations
+    fetch('/api/registrations/my', {
+        headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+    })
+        .then(response => response.json())
+        .then(data => {
+            if (!data.success || data.registrations.length === 0) {
+                scheduleContainer.innerHTML = `
+                <div class="empty-schedule-message">
+                    <p>You have no courses scheduled yet.</p>
+                    <a href="/student/courses" class="btn btn-sm btn-outline">Browse Courses</a>
+                </div>
+            `;
+                return;
             }
-        ];
 
-        // Create a simplified weekly calendar view
-        scheduleContainer.innerHTML = `
-            <div class="simplified-schedule">
-                <div class="schedule-day">
-                    <div class="day-label">Monday</div>
-                    <div class="day-slots" id="monday-slots"></div>
+            // Get approved registrations only
+            const approvedRegistrations = data.registrations.filter(reg => reg.status === 'approved');
+
+            if (approvedRegistrations.length === 0) {
+                scheduleContainer.innerHTML = `
+                <div class="empty-schedule-message">
+                    <p>You have no approved course registrations yet.</p>
+                    <a href="/student/courses" class="btn btn-sm btn-outline">Browse Courses</a>
                 </div>
-                <div class="schedule-day">
-                    <div class="day-label">Tuesday</div>
-                    <div class="day-slots" id="tuesday-slots"></div>
+            `;
+                return;
+            }
+
+            // Create an array of colors to cycle through - same as in schedule.js
+            const colors = [
+                'course-color-1', 'course-color-2', 'course-color-3',
+                'course-color-4', 'course-color-5', 'course-color-6',
+                'course-color-7', 'course-color-8'
+            ];
+
+            // Map each course to a color
+            const courseColors = {};
+            approvedRegistrations.forEach((reg, index) => {
+                courseColors[reg.course._id] = colors[index % colors.length];
+            });
+
+            // Create a mini version of the weekly calendar
+            scheduleContainer.innerHTML = `
+            <div class="mini-weekly-calendar">
+                <div class="mini-day-column">
+                    <div class="mini-day-header">Mon</div>
+                    <div class="mini-day-content" id="mini-monday-content"></div>
                 </div>
-                <div class="schedule-day">
-                    <div class="day-label">Wednesday</div>
-                    <div class="day-slots" id="wednesday-slots"></div>
+                <div class="mini-day-column">
+                    <div class="mini-day-header">Tue</div>
+                    <div class="mini-day-content" id="mini-tuesday-content"></div>
                 </div>
-                <div class="schedule-day">
-                    <div class="day-label">Thursday</div>
-                    <div class="day-slots" id="thursday-slots"></div>
+                <div class="mini-day-column">
+                    <div class="mini-day-header">Wed</div>
+                    <div class="mini-day-content" id="mini-wednesday-content"></div>
                 </div>
-                <div class="schedule-day">
-                    <div class="day-label">Friday</div>
-                    <div class="day-slots" id="friday-slots"></div>
+                <div class="mini-day-column">
+                    <div class="mini-day-header">Thu</div>
+                    <div class="mini-day-content" id="mini-thursday-content"></div>
+                </div>
+                <div class="mini-day-column">
+                    <div class="mini-day-header">Fri</div>
+                    <div class="mini-day-content" id="mini-friday-content"></div>
                 </div>
             </div>
         `;
 
-        // Add course slots to days
-        courses.forEach(course => {
-            course.schedule.forEach(slot => {
-                const dayContainer = document.getElementById(`${slot.day.toLowerCase()}-slots`);
+            // Helper function to convert time to minutes since midnight
+            function convertTimeToMinutes(timeString) {
+                const [hours, minutes] = timeString.split(':').map(Number);
+                return hours * 60 + minutes;
+            }
 
-                if (dayContainer) {
+            // Render each course slot
+            approvedRegistrations.forEach(reg => {
+                const course = reg.course;
+
+                course.schedule.forEach(slot => {
+                    const dayId = `mini-${slot.day.toLowerCase()}-content`;
+                    const dayContent = document.getElementById(dayId);
+
+                    if (!dayContent) return;
+
+                    // Calculate position and height
+                    const startMinutes = convertTimeToMinutes(slot.startTime);
+                    const endMinutes = convertTimeToMinutes(slot.endTime);
+
+                    // Position calculations - 8am (480) to 8pm (1200) - 720 minutes range
+                    const startPosition = ((startMinutes - 480) / 720) * 100;
+                    const height = ((endMinutes - startMinutes) / 720) * 100;
+
+                    // Create course slot element
                     const courseSlot = document.createElement('div');
-                    courseSlot.className = `simplified-slot ${course.color}`;
+                    courseSlot.className = `mini-course-slot ${courseColors[course._id]}`;
+                    courseSlot.style.top = `${startPosition}%`;
+                    courseSlot.style.height = `${height}%`;
+
                     courseSlot.innerHTML = `
-                        <div class="slot-time">${slot.startTime} - ${slot.endTime}</div>
-                        <div class="slot-course">${course.code}</div>
-                        <div class="slot-room">${slot.room}</div>
-                    `;
+                    <div class="mini-course-code">${course.courseCode}</div>
+                `;
 
-                    dayContainer.appendChild(courseSlot);
-                }
+                    // Add tooltip with more details
+                    courseSlot.title = `${course.courseCode} - ${course.title}\n${slot.startTime} - ${slot.endTime} in ${slot.room}`;
+
+                    dayContent.appendChild(courseSlot);
+                });
             });
-        });
-
-        // Add styles for simplified schedule
-        const style = document.createElement('style');
-        style.textContent = `
-            .simplified-schedule {
-                display: flex;
-                width: 100%;
-                min-height: 200px;
-                overflow-x: auto;
-            }
-            
-            .schedule-day {
-                flex: 1;
-                min-width: 120px;
-                display: flex;
-                flex-direction: column;
-                border-right: 1px solid var(--gray-200);
-            }
-            
-            .schedule-day:last-child {
-                border-right: none;
-            }
-            
-            .day-label {
-                padding: 0.75rem;
-                text-align: center;
-                font-weight: 600;
-                background-color: var(--gray-100);
-                border-bottom: 1px solid var(--gray-200);
-            }
-            
-            .day-slots {
-                flex: 1;
-                padding: 0.5rem;
-                display: flex;
-                flex-direction: column;
-                gap: 0.5rem;
-            }
-            
-            .simplified-slot {
-                padding: 0.75rem;
-                border-radius: var(--border-radius-sm);
-                color: white;
-            }
-            
-            .slot-time {
-                font-size: 0.75rem;
-                margin-bottom: 0.25rem;
-            }
-            
-            .slot-course {
-                font-weight: 600;
-                margin-bottom: 0.25rem;
-            }
-            
-            .slot-room {
-                font-size: 0.75rem;
-                opacity: 0.9;
-            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            scheduleContainer.innerHTML = `
+            <div class="error-state">
+                <p>Failed to load schedule</p>
+            </div>
         `;
-
-        document.head.appendChild(style);
-
-    }, 1800);
+        });
 }

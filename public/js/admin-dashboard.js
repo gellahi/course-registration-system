@@ -1,3 +1,4 @@
+// Update the document.ready function
 document.addEventListener('DOMContentLoaded', function () {
     // Fetch dashboard statistics
     fetchDashboardStats();
@@ -7,9 +8,12 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // Fetch courses with low seats
     fetchLowSeatsCourses();
+    
+    // Fetch system alerts
+    fetchSystemAlerts();
 });
 
-// Replace the fetchDashboardStats function
+// Replace the fetchDashboardStats function to fix course count issue
 function fetchDashboardStats() {
     // Fetch student count
     fetch('/api/users/count?role=student', {
@@ -21,23 +25,39 @@ function fetchDashboardStats() {
     .then(data => {
         if (data.success) {
             document.getElementById('studentCount').textContent = data.count;
+        } else {
+            document.getElementById('studentCount').textContent = 'Error';
         }
     })
-    .catch(error => console.error('Error:', error));
+    .catch(error => {
+        console.error('Error:', error);
+        document.getElementById('studentCount').textContent = 'Error';
+    });
 
-    // Fetch course count
+    // Improved fetch course count with better error handling
     fetch('/api/courses/count', {
         headers: {
             'Authorization': `Bearer ${localStorage.getItem('token')}`
         }
     })
-    .then(response => response.json())
+    .then(response => {
+        if (!response.ok) {
+            throw new Error(`HTTP error ${response.status}`);
+        }
+        return response.json();
+    })
     .then(data => {
         if (data.success) {
             document.getElementById('courseCount').textContent = data.count;
+        } else {
+            document.getElementById('courseCount').textContent = 'Error';
+            console.error('API Error:', data.error);
         }
     })
-    .catch(error => console.error('Error:', error));
+    .catch(error => {
+        console.error('Error fetching course count:', error);
+        document.getElementById('courseCount').textContent = 'Error';
+    });
 
     // Fetch registration count
     fetch('/api/registrations/count', {
@@ -49,9 +69,14 @@ function fetchDashboardStats() {
     .then(data => {
         if (data.success) {
             document.getElementById('registrationCount').textContent = data.count;
+        } else {
+            document.getElementById('registrationCount').textContent = 'Error';
         }
     })
-    .catch(error => console.error('Error:', error));
+    .catch(error => {
+        console.error('Error:', error);
+        document.getElementById('registrationCount').textContent = 'Error';
+    });
 
     // Fetch prerequisite issues count
     fetch('/api/reports/prerequisite-issues/count', {
@@ -63,9 +88,77 @@ function fetchDashboardStats() {
     .then(data => {
         if (data.success) {
             document.getElementById('issueCount').textContent = data.count;
+        } else {
+            document.getElementById('issueCount').textContent = 'Error';
         }
     })
-    .catch(error => console.error('Error:', error));
+    .catch(error => {
+        console.error('Error:', error);
+        document.getElementById('issueCount').textContent = 'Error';
+    });
+}
+
+// Add this function to fetch system alerts
+function fetchSystemAlerts() {
+    fetch('/api/config/alerts', {
+        headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        const container = document.getElementById('systemAlerts');
+        
+        if (data.success && data.alerts.length > 0) {
+            container.innerHTML = '';
+            
+            data.alerts.forEach(alert => {
+                const alertItem = document.createElement('div');
+                alertItem.className = 'alert-item';
+                alertItem.innerHTML = `
+                    <div class="alert-icon ${alert.type}">
+                        <i class="fas fa-${getIconForAlertType(alert.type)}"></i>
+                    </div>
+                    <div class="alert-content">
+                        <h4>${alert.title}</h4>
+                        <p>${alert.description}</p>
+                        ${alert.link ? `<a href="${alert.link}" class="alert-link">${alert.linkText}</a>` : ''}
+                    </div>
+                `;
+                
+                container.appendChild(alertItem);
+            });
+        } else {
+            container.innerHTML = `
+                <div class="empty-state-small">
+                    <p>No system alerts</p>
+                </div>
+            `;
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        document.getElementById('systemAlerts').innerHTML = `
+            <div class="error-state">
+                <p>Failed to load system alerts</p>
+            </div>
+        `;
+    });
+}
+
+function getIconForAlertType(type) {
+    switch(type) {
+        case 'info':
+            return 'info-circle';
+        case 'warning':
+            return 'exclamation-circle';
+        case 'danger':
+            return 'exclamation-triangle';
+        case 'success':
+            return 'check-circle';
+        default:
+            return 'bell';
+    }
 }
 
 // Replace the fetchRecentRegistrations function

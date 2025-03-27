@@ -160,10 +160,15 @@ exports.subscribeToCourse = async (req, res) => {
 // @access  Private
 exports.getCourseCount = async (req, res) => {
     try {
+        // Add console.log to verify the function is being called
+        console.log('Getting course count...');
+
         const count = await Course.countDocuments();
+        console.log('Course count:', count);
 
         res.json({ success: true, count });
     } catch (error) {
+        console.error('Error in getCourseCount:', error);
         res.status(500).json({ success: false, error: error.message });
     }
 };
