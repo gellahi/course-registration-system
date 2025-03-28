@@ -13,24 +13,51 @@ function fetchCourses() {
             'Authorization': `Bearer ${localStorage.getItem('token')}`
         }
     })
-        .then(response => response.json())
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error ${response.status}`);
+            }
+            return response.json();
+        })
         .then(data => {
             // Hide loading
             document.getElementById('coursesLoading').style.display = 'none';
 
             if (data.success) {
-                renderCoursesTable(data.courses);
+                // Check if courses is an array before rendering
+                if (Array.isArray(data.courses)) {
+                    renderCoursesTable(data.courses);
+                } else {
+                    console.error('Invalid courses data format:', data);
+                    showToast('Received invalid courses data from server', 'error');
+                    document.getElementById('coursesTable').innerHTML = `
+                    <div class="error-state">
+                        <p>Failed to load courses: Invalid data format</p>
+                    </div>
+                `;
+                }
             } else {
-                showToast('Failed to load courses', 'error');
+                console.error('API Error:', data.error);
+                showToast(data.error || 'Failed to load courses', 'error');
+                document.getElementById('coursesTable').innerHTML = `
+                <div class="error-state">
+                    <p>Failed to load courses</p>
+                </div>
+            `;
             }
         })
         .catch(error => {
             document.getElementById('coursesLoading').style.display = 'none';
-            console.error('Error:', error);
+            console.error('Error fetching courses:', error);
             showToast('An error occurred while loading courses', 'error');
+            document.getElementById('coursesTable').innerHTML = `
+            <div class="error-state">
+                <p>Failed to load courses: ${error.message}</p>
+                <button class="btn btn-primary mt-3" onclick="fetchCourses()">Try Again</button>
+            </div>
+        `;
         });
-}
-
+}fetchRecentRegistrations
 function renderCoursesTable(courses) {
     const container = document.getElementById('coursesTable');
 

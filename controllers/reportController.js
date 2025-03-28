@@ -1,6 +1,7 @@
 const Registration = require('../models/registration');
 const Course = require('../models/course');
 const User = require('../models/user');
+const mongoose = require('mongoose');
 
 // @desc    Get course enrollment report
 // @route   GET /api/reports/course-enrollment/:courseId
@@ -145,25 +146,36 @@ exports.getPrerequisiteIssuesReport = async (req, res) => {
 // @access  Private/Admin
 exports.getPrerequisiteIssuesCount = async (req, res) => {
     try {
+        // First check if Collection exists to avoid runtime errors
+        const collectionExists = await mongoose.connection.db.listCollections({
+            name: 'registrations'
+        }).hasNext();
+
+        if (!collectionExists) {
+            return res.json({ success: true, count: 0 });
+        }
+
         // Get all registrations
         const registrations = await Registration.find({
             status: 'approved'
-        }).populate('student', 'name rollNumber')
-            .populate({
-                path: 'course',
-                populate: { path: 'prerequisites' }
-            });
+        }).populate({
+            path: 'course',
+            populate: { path: 'prerequisites' }
+        }).populate('student');
+
+        // Filter out registrations with missing courses
+        const validRegistrations = registrations.filter(reg => reg.course != null);
 
         let issueCount = 0;
 
         // Check each registration for prerequisite issues
-        for (const registration of registrations) {
+        for (const registration of validRegistrations) {
+            // Skip if the course has no prerequisites
             if (!registration.course.prerequisites || registration.course.prerequisites.length === 0) {
                 continue;
             }
 
             const studentId = registration.student._id;
-            const course = registration.course;
 
             // Get all completed courses for the student
             const completedRegistrations = await Registration.find({
@@ -172,11 +184,19 @@ exports.getPrerequisiteIssuesCount = async (req, res) => {
                 _id: { $ne: registration._id } // Exclude current registration
             }).select('course');
 
-            const completedCourseIds = completedRegistrations.map(reg => reg.course.toString());
+            if (!completedRegistrations || completedRegistrations.length === 0) {
+                // If the student has no other approved courses, they definitely don't meet prerequisites
+                issueCount++;
+                continue;
+            }
+
+            const completedCourseIds = completedRegistrations
+                .filter(reg => reg.course) // Ensure course is not null
+                .map(reg => reg.course.toString());
 
             // Check if all prerequisites are met
-            const unmetPrerequisites = course.prerequisites.filter(
-                prereq => !completedCourseIds.includes(prereq._id.toString())
+            const unmetPrerequisites = registration.course.prerequisites.filter(
+                prereq => prereq && !completedCourseIds.includes(prereq._id.toString())
             );
 
             if (unmetPrerequisites.length > 0) {
@@ -186,6 +206,7 @@ exports.getPrerequisiteIssuesCount = async (req, res) => {
 
         res.json({ success: true, count: issueCount });
     } catch (error) {
+        console.error('Error in getPrerequisiteIssuesCount:', error);
         res.status(500).json({ success: false, error: error.message });
     }
 };

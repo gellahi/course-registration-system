@@ -10,6 +10,10 @@ exports.registerForCourse = async (req, res) => {
         const { courseId } = req.body;
         const studentId = req.user._id;
 
+        if (!courseId) {
+            return res.status(400).json({ success: false, error: 'Course ID is required' });
+        }
+
         // Check if course exists
         const course = await Course.findById(courseId);
         if (!course) {
@@ -136,26 +140,113 @@ exports.registerForCourse = async (req, res) => {
 // @access  Private/Admin
 exports.getRegistrations = async (req, res) => {
     try {
-        const registrations = await Registration.find({})
+        // Get limit parameter with a default of all registrations
+        const limit = req.query.limit ? parseInt(req.query.limit) : null;
+
+        // Fetch registrations
+        let query = Registration.find({})
             .populate('student', 'name rollNumber')
-            .populate('course', 'courseCode title');
+            .populate('course', 'courseCode title')
+            .sort({ registrationDate: -1 }); // Sort by newest first
+
+        // Apply limit if provided
+        if (limit) {
+            query = query.limit(limit);
+        }
+
+        let registrations = await query;
+
+        // Filter out registrations with null courses (courses that were deleted)
+        const validRegistrations = registrations.filter(reg => reg.course != null);
+
+        // If we found registrations with null courses, clean them up in the background
+        if (validRegistrations.length < registrations.length) {
+            console.log(`Found ${registrations.length - validRegistrations.length} orphaned registrations`);
+
+            // Start cleanup process (non-blocking)
+            cleanupOrphanedRegistrations(registrations.filter(reg => reg.course == null));
+
+            // Set our response to only include valid registrations
+            registrations = validRegistrations;
+        }
 
         res.json({ success: true, registrations });
     } catch (error) {
+        console.error('Error fetching registrations:', error);
         res.status(500).json({ success: false, error: error.message });
     }
 };
 
+// Helper function to clean up registrations with deleted courses
+async function cleanupOrphanedRegistrations(orphanedRegistrations) {
+    try {
+        for (const reg of orphanedRegistrations) {
+            // Remove registration from user's registeredCourses
+            await User.findByIdAndUpdate(
+                reg.student,
+                { $pull: { registeredCourses: reg._id } }
+            );
+
+            // Delete the registration
+            await Registration.findByIdAndDelete(reg._id);
+            console.log(`Cleaned up orphaned registration: ${reg._id}`);
+        }
+    } catch (error) {
+        console.error('Error cleaning up orphaned registrations:', error);
+    }
+}
+
+// @desc    Get student's registrations
+// @route   GET /api/registrations/my
+// @access  Private
 // @desc    Get student's registrations
 // @route   GET /api/registrations/my
 // @access  Private
 exports.getMyRegistrations = async (req, res) => {
     try {
-        const registrations = await Registration.find({ student: req.user._id })
-            .populate('course');
+        console.log(`Fetching registrations for user: ${req.user._id}`);
+
+        // Fetch registrations with error handling for each populate operation
+        let registrations = await Registration.find({ student: req.user._id })
+            .populate({
+                path: 'course',
+                select: 'courseCode title department creditHours schedule availableSeats totalSeats'
+            });
+
+        console.log(`Found ${registrations.length} total registrations`);
+
+        // Filter out registrations with null courses (courses that were deleted)
+        const validRegistrations = registrations.filter(reg => reg.course != null);
+        console.log(`Found ${validRegistrations.length} valid registrations`);
+
+        // If we found registrations with missing courses, clean them up
+        if (validRegistrations.length < registrations.length) {
+            console.log(`Found ${registrations.length - validRegistrations.length} orphaned registrations to clean up`);
+
+            // Delete registrations with missing courses
+            for (const reg of registrations) {
+                if (reg.course == null) {
+                    console.log(`Cleaning up orphaned registration: ${reg._id}`);
+
+                    // Remove from user's registeredCourses
+                    await User.findByIdAndUpdate(
+                        req.user._id,
+                        { $pull: { registeredCourses: reg._id } }
+                    );
+
+                    // Delete the registration
+                    await Registration.findByIdAndDelete(reg._id);
+                }
+            }
+
+            // Set our response to only include valid registrations
+            registrations = validRegistrations;
+            console.log(`Orphaned registrations cleaned up`);
+        }
 
         res.json({ success: true, registrations });
     } catch (error) {
+        console.error('Error fetching registrations:', error);
         res.status(500).json({ success: false, error: error.message });
     }
 };

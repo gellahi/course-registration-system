@@ -82,12 +82,25 @@ function fetchPrerequisites() {
 function populatePrerequisites(courses) {
     const prerequisitesSelect = document.getElementById('prerequisites');
 
+    // Add a disabled option at the top to indicate prerequisites are optional
+    const defaultOption = document.createElement('option');
+    defaultOption.disabled = true;
+    defaultOption.selected = true;
+    defaultOption.textContent = '-- Prerequisites (Optional) --';
+    prerequisitesSelect.appendChild(defaultOption);
+
     courses.forEach(course => {
         const option = document.createElement('option');
         option.value = course._id;
         option.textContent = `${course.courseCode} - ${course.title}`;
         prerequisitesSelect.appendChild(option);
     });
+
+    // Add a "No prerequisites" message directly in the form
+    const prereqHelp = document.createElement('small');
+    prereqHelp.className = 'form-text text-muted';
+    prereqHelp.textContent = 'Leave empty if the course has no prerequisites.';
+    prerequisitesSelect.parentNode.appendChild(prereqHelp);
 }
 
 function submitCourseForm(e) {
@@ -96,6 +109,8 @@ function submitCourseForm(e) {
     // Get form data
     const formData = new FormData(this);
     const courseData = {};
+
+    courseData.prerequisites = [];
 
     // Convert form data to JSON
     for (const [key, value] of formData.entries()) {
@@ -111,11 +126,10 @@ function submitCourseForm(e) {
 
                 courseData.schedule[index][field] = value;
             }
-        } else if (key === 'prerequisites') {
-            // Handle multiple select
-            if (!courseData.prerequisites) courseData.prerequisites = [];
+        } else if (key === 'prerequisites' && value) {
+            // Only add non-empty prerequisites
             courseData.prerequisites.push(value);
-        } else {
+        } else if (key !== 'prerequisites') {
             courseData[key] = value;
         }
     }

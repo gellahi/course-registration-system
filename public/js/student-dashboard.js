@@ -101,8 +101,11 @@ function fetchDashboardStats() {
         .then(response => response.json())
         .then(data => {
             if (data.success) {
+                // Filter out registrations with missing course data
+                const validRegistrations = data.registrations.filter(reg => reg.course != null);
+
                 // Count approved registrations
-                const approvedRegistrations = data.registrations.filter(reg => reg.status === 'approved');
+                const approvedRegistrations = validRegistrations.filter(reg => reg.status === 'approved');
                 document.getElementById('courseCount').textContent = approvedRegistrations.length;
 
                 // Calculate total credit hours
@@ -121,19 +124,48 @@ function fetchDashboardStats() {
 
 // Replace the fetchRecentRegistrations function
 function fetchRecentRegistrations() {
+    const container = document.getElementById('recentRegistrations');
+
+    // Show loading indicator
+    container.innerHTML = `
+        <div class="loading-indicator">
+            <div class="spinner-border text-primary" role="status">
+                <span class="sr-only">Loading...</span>
+            </div>
+            <p>Loading registrations...</p>
+        </div>
+    `;
+
     fetch('/api/registrations/my', {
         headers: {
             'Authorization': `Bearer ${localStorage.getItem('token')}`
         }
     })
-        .then(response => response.json())
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error ${response.status}`);
+            }
+            return response.json();
+        })
         .then(data => {
-            const container = document.getElementById('recentRegistrations');
             container.innerHTML = '';
 
-            if (data.success && data.registrations.length > 0) {
+            if (data.success && data.registrations && data.registrations.length > 0) {
+                // Filter out registrations with null course data
+                const validRegistrations = data.registrations.filter(reg => reg.course != null);
+
+                if (validRegistrations.length === 0) {
+                    container.innerHTML = `
+                    <div class="empty-state-small">
+                        <p>No valid registrations found</p>
+                        <a href="/student/courses" class="btn btn-sm btn-outline">Browse Courses</a>
+                    </div>
+                `;
+                    return;
+                }
+
                 // Sort by registration date (most recent first)
-                const sortedRegistrations = data.registrations
+                const sortedRegistrations = validRegistrations
                     .slice()
                     .sort((a, b) => new Date(b.registrationDate) - new Date(a.registrationDate))
                     .slice(0, 3); // Take only the 3 most recent
@@ -165,14 +197,17 @@ function fetchRecentRegistrations() {
             }
         })
         .catch(error => {
-            console.error('Error:', error);
-            document.getElementById('recentRegistrations').innerHTML = `
+            console.error('Error fetching registrations:', error);
+            container.innerHTML = `
             <div class="error-state">
                 <p>Failed to load registrations</p>
+                <button class="btn btn-sm btn-primary mt-2" onclick="fetchRecentRegistrations()">Try Again</button>
             </div>
         `;
         });
 }
+
+
 // Replace the initializeSchedule function with this improved version
 function initializeSchedule() {
     const scheduleContainer = document.getElementById('dashboardSchedule');

@@ -69,22 +69,70 @@ exports.createCourse = async (req, res) => {
             prerequisites
         } = req.body;
 
+        // Validate required fields
+        if (!courseCode || !title || !department || !level || !creditHours || !totalSeats) {
+            return res.status(400).json({
+                success: false,
+                error: 'Please provide all required fields'
+            });
+        }
+
+        // Validate course code format
+        if (!/^[A-Z]{2,4}-\d{3,4}$/.test(courseCode)) {
+            return res.status(400).json({
+                success: false,
+                error: 'Course code should be in format DEPT-XXX (e.g., CS-101)'
+            });
+        }
+
+        // Validate numeric values
+        if (parseInt(level) <= 0 || parseInt(creditHours) <= 0 || parseInt(totalSeats) <= 0) {
+            return res.status(400).json({
+                success: false,
+                error: 'Level, credit hours, and total seats must be positive numbers'
+            });
+        }
+
+        // Validate schedule entries
+        if (schedule && Array.isArray(schedule)) {
+            for (const slot of schedule) {
+                if (!slot.day || !slot.startTime || !slot.endTime || !slot.room) {
+                    return res.status(400).json({
+                        success: false,
+                        error: 'Each schedule entry must have day, start time, end time, and room'
+                    });
+                }
+            }
+        }
+
+        // Check for duplicate course code
+        const existingCourse = await Course.findOne({ courseCode });
+        if (existingCourse) {
+            return res.status(400).json({
+                success: false,
+                error: 'A course with this course code already exists'
+            });
+        }
+
+        // Create and save the new course
         const newCourse = new Course({
             courseCode,
             title,
             department,
-            level,
+            level: parseInt(level),
             description,
-            creditHours,
-            totalSeats,
-            availableSeats: availableSeats || totalSeats,
+            creditHours: parseInt(creditHours),
+            totalSeats: parseInt(totalSeats),
+            availableSeats: availableSeats ? parseInt(availableSeats) : parseInt(totalSeats),
             schedule,
-            prerequisites
+            prerequisites: prerequisites || []
         });
 
         const createdCourse = await newCourse.save();
+        console.log(`New course created: ${createdCourse.courseCode} - ${createdCourse.title}`);
         res.status(201).json({ success: true, course: createdCourse });
     } catch (error) {
+        console.error('Error creating course:', error);
         res.status(500).json({ success: false, error: error.message });
     }
 };
@@ -116,18 +164,70 @@ exports.updateCourse = async (req, res) => {
 // @access  Private/Admin
 exports.deleteCourse = async (req, res) => {
     try {
+        console.log(`Attempting to delete course with ID: ${req.params.id}`);
         const course = await Course.findById(req.params.id);
 
         if (!course) {
             return res.status(404).json({ success: false, error: 'Course not found' });
         }
 
-        await course.deleteOne();
-        res.json({ success: true, message: 'Course removed' });
+        console.log(`Found course to delete: ${course.courseCode} - ${course.title}`);
+
+        // Begin transaction to ensure all operations succeed or fail together
+        const session = await mongoose.startSession();
+        session.startTransaction();
+
+        try {
+            // Find all registrations for this course
+            const registrations = await Registration.find({ course: req.params.id }).session(session);
+            console.log(`Found ${registrations.length} registrations to remove`);
+
+            // Delete all registrations and update user records
+            for (const registration of registrations) {
+                // Remove registration from user's registeredCourses
+                await User.findByIdAndUpdate(
+                    registration.student,
+                    { $pull: { registeredCourses: registration._id } },
+                    { session }
+                );
+
+                console.log(`Removed registration ${registration._id} from user ${registration.student}`);
+
+                // Delete the registration
+                await Registration.findByIdAndDelete(registration._id).session(session);
+            }
+
+            // Remove this course from all courses that have it as a prerequisite
+            const updateResult = await Course.updateMany(
+                { prerequisites: req.params.id },
+                { $pull: { prerequisites: req.params.id } },
+                { session }
+            );
+            console.log(`Removed course as prerequisite from ${updateResult.modifiedCount || 0} other courses`);
+
+            // Finally delete the course
+            await Course.findByIdAndDelete(req.params.id).session(session);
+
+            // Commit the transaction
+            await session.commitTransaction();
+            console.log('Course deletion transaction committed successfully');
+
+            res.json({ success: true, message: 'Course and all related registrations removed' });
+        } catch (error) {
+            // If an error occurred, abort the transaction
+            await session.abortTransaction();
+            console.error('Course deletion transaction aborted:', error);
+            throw error;
+        } finally {
+            // End the session
+            session.endSession();
+        }
     } catch (error) {
+        console.error('Error in course deletion:', error);
         res.status(500).json({ success: false, error: error.message });
     }
 };
+
 
 // @desc    Subscribe to course notifications
 // @route   POST /api/courses/:id/subscribe

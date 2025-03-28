@@ -28,6 +28,21 @@ function renderSchedule(registrations) {
     // Get approved registrations only
     const approvedRegistrations = registrations.filter(reg => reg.status === 'approved');
 
+    if (approvedRegistrations.length === 0) {
+        const container = document.querySelector('.schedule-container');
+        if (container) {
+            container.innerHTML = `
+                <div class="empty-state">
+                    <i class="fas fa-calendar-alt"></i>
+                    <h3>No scheduled courses</h3>
+                    <p>You don't have any scheduled courses yet. Browse courses to register.</p>
+                    <a href="/student/courses" class="btn btn-primary">Browse Courses</a>
+                </div>
+            `;
+        }
+        return;
+    }
+
     // Create an array of colors to cycle through
     const colors = [
         'course-color-1', 'course-color-2', 'course-color-3',
