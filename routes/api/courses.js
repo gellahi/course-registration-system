@@ -10,6 +10,8 @@ router.route('/')
 
 router.get('/count', courseController.getCourseCount);
 
+router.post('/check-conflicts', protect, courseController.checkConflicts);
+
 // Get, update, delete course by ID
 router.route('/:id')
     .get(courseController.getCourseById)

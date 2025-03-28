@@ -583,3 +583,36 @@ textarea:focus {
         font-size: 2.5rem;
     }
 }
+
+/* Schedule conflict warning modal */
+.conflict-warning-modal .modal-header.warning {
+    background-color: #f0ad4e;
+    color: white;
+}
+
+.conflict-list {
+    max-height: 200px;
+    overflow-y: auto;
+    border: 1px solid #ddd;
+    padding: 10px;
+    margin: 10px 0;
+    border-radius: 4px;
+}
+
+.conflict-list li {
+    margin-bottom: 10px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #eee;
+}
+
+.conflict-list li:last-child {
+    margin-bottom: 0;
+    padding-bottom: 0;
+    border-bottom: none;
+}
+
+.warning-message {
+    color: #d9534f;
+    font-weight: bold;
+    margin-top: 15px;
+}

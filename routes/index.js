@@ -126,6 +126,28 @@ router.get('/admin/courses/create', protect, admin, async (req, res) => {
     }
 });
 
+// Admin edit course form
+router.get('/admin/courses/edit/:id', protect, admin, async (req, res) => {
+    try {
+        const user = await User.findById(req.user._id);
+        if (!user) {
+            return res.redirect('/admin/login');
+        }
+
+        // Fetch the course to pre-populate the form
+        const course = await Course.findById(req.params.id).populate('prerequisites');
+
+        if (!course) {
+            return res.status(404).send('Course not found');
+        }
+
+        res.render('admin/courses/edit', { user, course });
+    } catch (error) {
+        console.error(error);
+        res.status(500).send('Server Error');
+    }
+});
+
 // Admin students management
 router.get('/admin/students', protect, admin, async (req, res) => {
     try {

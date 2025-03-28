@@ -4,6 +4,9 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // Fetch prerequisites for the dropdown
     fetchPrerequisites();
+
+    // Set up checkbox for prerequisites
+    setupPrerequisitesCheckbox();
 });
 
 function initCourseForm() {
@@ -12,6 +15,25 @@ function initCourseForm() {
 
     // Set up form submission
     document.getElementById('courseForm').addEventListener('submit', submitCourseForm);
+}
+
+function setupPrerequisitesCheckbox() {
+    const hasPrerequisitesCheckbox = document.getElementById('hasPrerequisites');
+    const prerequisitesContainer = document.getElementById('prerequisitesContainer');
+
+    hasPrerequisitesCheckbox.addEventListener('change', function () {
+        prerequisitesContainer.style.display = this.checked ? 'block' : 'none';
+
+        // Clear selections when hiding
+        if (!this.checked) {
+            const prerequisitesSelect = document.getElementById('prerequisites');
+            if (prerequisitesSelect) {
+                for (let i = 0; i < prerequisitesSelect.options.length; i++) {
+                    prerequisitesSelect.options[i].selected = false;
+                }
+            }
+        }
+    });
 }
 
 function addScheduleEntry() {
@@ -81,14 +103,21 @@ function fetchPrerequisites() {
 
 function populatePrerequisites(courses) {
     const prerequisitesSelect = document.getElementById('prerequisites');
+    const prerequisitesContainer = document.getElementById('prerequisitesContainer');
+    const hasPrerequisitesCheckbox = document.getElementById('hasPrerequisites');
+    const prerequisitesHelp = document.getElementById('prerequisitesHelp');
 
-    // Add a disabled option at the top to indicate prerequisites are optional
-    const defaultOption = document.createElement('option');
-    defaultOption.disabled = true;
-    defaultOption.selected = true;
-    defaultOption.textContent = '-- Prerequisites (Optional) --';
-    prerequisitesSelect.appendChild(defaultOption);
+    // Clear existing options
+    prerequisitesSelect.innerHTML = '';
 
+    if (!courses || courses.length === 0) {
+        // No courses available for prerequisites
+        prerequisitesHelp.textContent = 'No courses available to set as prerequisites.';
+        hasPrerequisitesCheckbox.disabled = true;
+        return;
+    }
+
+    // Add options for available courses
     courses.forEach(course => {
         const option = document.createElement('option');
         option.value = course._id;
@@ -96,11 +125,57 @@ function populatePrerequisites(courses) {
         prerequisitesSelect.appendChild(option);
     });
 
-    // Add a "No prerequisites" message directly in the form
-    const prereqHelp = document.createElement('small');
-    prereqHelp.className = 'form-text text-muted';
-    prereqHelp.textContent = 'Leave empty if the course has no prerequisites.';
-    prerequisitesSelect.parentNode.appendChild(prereqHelp);
+    // Update help text
+    prerequisitesHelp.textContent = 'Select one or more courses that must be completed before taking this course.';
+}
+
+function showConflictWarning(conflicts) {
+    // Create a conflict warning dialog
+    const modal = document.createElement('div');
+    modal.className = 'modal conflict-warning-modal';
+    modal.innerHTML = `
+        <div class="modal-content">
+            <div class="modal-header warning">
+                <h3><i class="fas fa-exclamation-triangle"></i> Schedule Conflict Warning</h3>
+                <span class="close">&times;</span>
+            </div>
+            <div class="modal-body">
+                <p>This course has scheduling conflicts with existing courses:</p>
+                <ul class="conflict-list">
+                    ${conflicts.map(conflict => `
+                        <li>
+                            <strong>${conflict.course.courseCode} - ${conflict.course.title}</strong><br>
+                            ${conflict.slot.day} ${conflict.slot.startTime}-${conflict.slot.endTime} in Room ${conflict.slot.room}
+                        </li>
+                    `).join('')}
+                </ul>
+                <p class="warning-message">Students will not be able to register for both courses due to the time conflict.</p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary cancel-btn">Cancel</button>
+                <button class="btn btn-warning proceed-btn">Create Anyway</button>
+            </div>
+        </div>
+    `;
+
+    document.body.appendChild(modal);
+
+    return new Promise(resolve => {
+        // Add event listeners
+        const closeBtn = modal.querySelector('.close');
+        const cancelBtn = modal.querySelector('.cancel-btn');
+        const proceedBtn = modal.querySelector('.proceed-btn');
+
+        closeBtn.onclick = cancelBtn.onclick = () => {
+            document.body.removeChild(modal);
+            resolve(false);
+        };
+
+        proceedBtn.onclick = () => {
+            document.body.removeChild(modal);
+            resolve(true);
+        };
+    });
 }
 
 function submitCourseForm(e) {
@@ -128,7 +203,9 @@ function submitCourseForm(e) {
             }
         } else if (key === 'prerequisites' && value) {
             // Only add non-empty prerequisites
-            courseData.prerequisites.push(value);
+            if (document.getElementById('hasPrerequisites').checked) {
+                courseData.prerequisites.push(value);
+            }
         } else if (key !== 'prerequisites') {
             courseData[key] = value;
         }
@@ -145,29 +222,64 @@ function submitCourseForm(e) {
     courseData.totalSeats = parseInt(courseData.totalSeats);
     courseData.availableSeats = courseData.totalSeats;
 
-    // Submit the data
-    fetch('/api/courses', {
+    function submitForm() {
+        fetch('/api/courses', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${localStorage.getItem('token')}`
+            },
+            body: JSON.stringify(courseData)
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    if (data.hasConflicts) {
+                        showToast('Course created with schedule conflicts', 'warning');
+                    } else {
+                        showToast('Course created successfully', 'success');
+                    }
+
+                    // Redirect to courses page after a delay
+                    setTimeout(() => {
+                        window.location.href = '/admin/courses';
+                    }, 1500);
+                } else {
+                    showToast(data.error || 'Failed to create course', 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showToast('An error occurred', 'error');
+            });
+    }
+
+    // First check for conflicts, then decide whether to proceed
+    fetch('/api/courses/check-conflicts', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${localStorage.getItem('token')}`
         },
-        body: JSON.stringify(courseData)
+        body: JSON.stringify({ schedule: courseData.schedule })
     })
         .then(response => response.json())
         .then(data => {
-            if (data.success) {
-                showToast('Course created successfully', 'success');
-                // Redirect to courses page after a delay
-                setTimeout(() => {
-                    window.location.href = '/admin/courses';
-                }, 1500);
+            if (data.conflicts && data.conflicts.length > 0) {
+                // Show warning and proceed only if admin confirms
+                showConflictWarning(data.conflicts).then(shouldProceed => {
+                    if (shouldProceed) {
+                        submitForm();
+                    }
+                });
             } else {
-                showToast(data.error || 'Failed to create course', 'error');
+                // No conflicts, proceed normally
+                submitForm();
             }
         })
         .catch(error => {
-            console.error('Error:', error);
-            showToast('An error occurred', 'error');
+            console.error('Error checking conflicts:', error);
+            // If conflict check fails, proceed anyway
+            submitForm();
         });
 }

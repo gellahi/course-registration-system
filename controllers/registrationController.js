@@ -61,9 +61,24 @@ exports.registerForCourse = async (req, res) => {
                         if ((newStart >= existingStart && newStart < existingEnd) ||
                             (newEnd > existingStart && newEnd <= existingEnd) ||
                             (newStart <= existingStart && newEnd >= existingEnd)) {
+
                             return res.status(400).json({
                                 success: false,
-                                error: `Schedule conflict with ${existingCourse.courseCode} on ${newSlot.day}`
+                                error: 'Schedule conflict detected',
+                                conflictDetails: {
+                                    course: {
+                                        id: existingCourse._id,
+                                        courseCode: existingCourse.courseCode,
+                                        title: existingCourse.title
+                                    },
+                                    day: newSlot.day,
+                                    existingTime: `${existingSlot.startTime} - ${existingSlot.endTime}`,
+                                    newTime: `${newSlot.startTime} - ${newSlot.endTime}`,
+                                    room: {
+                                        existing: existingSlot.room,
+                                        new: newSlot.room
+                                    }
+                                }
                             });
                         }
                     }
@@ -73,24 +88,36 @@ exports.registerForCourse = async (req, res) => {
 
         // Check prerequisites
         if (course.prerequisites && course.prerequisites.length > 0) {
+            console.log('Course has prerequisites:', course.prerequisites);
             // Get all completed courses for the student
             const completedRegistrations = await Registration.find({
                 student: studentId,
                 status: 'approved'
             }).select('course');
 
-            const completedCourseIds = completedRegistrations.map(reg => reg.course.toString());
+            // Create an array of course IDs that the student has completed
+            const completedCourseIds = completedRegistrations
+                .filter(reg => reg.course) // Filter out any null courses
+                .map(reg => reg.course._id.toString()); // Convert ObjectID to string
+
+            console.log('Student completed course IDs:', completedCourseIds);
 
             // Check if all prerequisites are met
-            const unmetPrerequisites = course.prerequisites.filter(
-                prereq => !completedCourseIds.includes(prereq.toString())
-            );
+            const unmetPrerequisites = [];
+            for (const prereq of course.prerequisites) {
+                const prereqId = prereq.toString();
+                if (!completedCourseIds.includes(prereqId)) {
+                    unmetPrerequisites.push(prereq);
+                }
+            }
 
             if (unmetPrerequisites.length > 0) {
                 // Get prerequisite details for better error message
                 const prereqCourses = await Course.find({
                     _id: { $in: unmetPrerequisites }
                 }).select('courseCode title');
+
+                console.log('Unmet prerequisites:', prereqCourses);
 
                 return res.status(400).json({
                     success: false,
@@ -131,6 +158,7 @@ exports.registerForCourse = async (req, res) => {
             registration: savedRegistration
         });
     } catch (error) {
+        console.error('Error in course registration:', error);
         res.status(500).json({ success: false, error: error.message });
     }
 };
@@ -196,9 +224,6 @@ async function cleanupOrphanedRegistrations(orphanedRegistrations) {
     }
 }
 
-// @desc    Get student's registrations
-// @route   GET /api/registrations/my
-// @access  Private
 // @desc    Get student's registrations
 // @route   GET /api/registrations/my
 // @access  Private

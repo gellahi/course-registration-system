@@ -203,6 +203,19 @@ function registerForCourse(courseId) {
                 showToast('Successfully registered for course!', 'success');
                 // Refresh courses to update available seats
                 fetchCourses();
+            } else if (data.prerequisites) {
+                // Show detailed error with missing prerequisites
+                const prereqList = data.prerequisites.map(p => `${p.courseCode} - ${p.title}`).join(', ');
+                showToast(`Missing prerequisites: ${prereqList}. Please make sure these courses are completed with approved status.`, 'error');
+            } else if (data.conflictDetails) {
+                // Show detailed schedule conflict error
+                const conflict = data.conflictDetails;
+                const errorMessage = `
+                Schedule conflict with ${conflict.course.courseCode} on ${conflict.day}!
+                Your existing course runs from ${conflict.existingTime}
+                This course is scheduled from ${conflict.newTime}
+            `;
+                showToast(errorMessage, 'error', 7000); // Longer display time for this complex message
             } else {
                 showToast(data.error || 'Registration failed', 'error');
             }

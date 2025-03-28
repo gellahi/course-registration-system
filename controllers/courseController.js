@@ -1,6 +1,61 @@
 const Course = require('../models/course');
 const User = require('../models/user');
 
+// Add this function at the top of the file
+function checkForScheduleConflicts(schedule, excludeCourseId = null) {
+    return new Promise(async (resolve) => {
+        try {
+            const conflictingCourses = [];
+
+            // For each schedule slot, find potential conflicts
+            if (schedule && Array.isArray(schedule)) {
+                for (const slot of schedule) {
+                    // Find courses with the same day and room
+                    const coursesWithSameSlot = await Course.find({
+                        _id: { $ne: excludeCourseId }, // Exclude current course if editing
+                        'schedule.day': slot.day,
+                        'schedule.room': slot.room
+                    }).select('_id courseCode title schedule');
+
+                    // Check for time overlaps
+                    for (const existingCourse of coursesWithSameSlot) {
+                        for (const existingSlot of existingCourse.schedule) {
+                            if (existingSlot.day === slot.day && existingSlot.room === slot.room) {
+                                const slotStart = convertTimeToMinutes(slot.startTime);
+                                const slotEnd = convertTimeToMinutes(slot.endTime);
+                                const existingStart = convertTimeToMinutes(existingSlot.startTime);
+                                const existingEnd = convertTimeToMinutes(existingSlot.endTime);
+
+                                // Check for overlap
+                                if ((slotStart >= existingStart && slotStart < existingEnd) ||
+                                    (slotEnd > existingStart && slotEnd <= existingEnd) ||
+                                    (slotStart <= existingStart && slotEnd >= existingEnd)) {
+
+                                    conflictingCourses.push({
+                                        course: existingCourse,
+                                        slot: existingSlot,
+                                        conflictsWith: slot
+                                    });
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            resolve(conflictingCourses);
+        } catch (error) {
+            console.error('Error checking schedule conflicts:', error);
+            resolve([]);
+        }
+    });
+}
+
+function convertTimeToMinutes(timeString) {
+    const [hours, minutes] = timeString.split(':').map(Number);
+    return hours * 60 + minutes;
+}
+
 // @desc    Get all courses
 // @route   GET /api/courses
 // @access  Public
@@ -114,6 +169,9 @@ exports.createCourse = async (req, res) => {
             });
         }
 
+        // Check for schedule conflicts - but don't block creation
+        const conflicts = await checkForScheduleConflicts(schedule);
+
         // Create and save the new course
         const newCourse = new Course({
             courseCode,
@@ -130,7 +188,12 @@ exports.createCourse = async (req, res) => {
 
         const createdCourse = await newCourse.save();
         console.log(`New course created: ${createdCourse.courseCode} - ${createdCourse.title}`);
-        res.status(201).json({ success: true, course: createdCourse });
+        res.status(201).json({
+            success: true,
+            course: createdCourse,
+            hasConflicts: conflicts.length > 0,
+            conflicts: conflicts
+        });
     } catch (error) {
         console.error('Error creating course:', error);
         res.status(500).json({ success: false, error: error.message });
@@ -148,13 +211,177 @@ exports.updateCourse = async (req, res) => {
             return res.status(404).json({ success: false, error: 'Course not found' });
         }
 
+        // Check for schedule conflicts if schedule is being updated
+        const conflicts = req.body.schedule ?
+            await checkForScheduleConflicts(req.body.schedule, req.params.id) : [];
+
+
+        // Calculate the difference between old and new total seats
+        const oldTotalSeats = course.totalSeats;
+        const newTotalSeats = req.body.totalSeats ? parseInt(req.body.totalSeats) : oldTotalSeats;
+        const seatsDifference = newTotalSeats - oldTotalSeats;
+
+        // Adjust available seats accordingly
+        if (seatsDifference !== 0) {
+            const newAvailableSeats = course.availableSeats + seatsDifference;
+
+            // Make sure availableSeats doesn't go negative
+            req.body.availableSeats = Math.max(0, newAvailableSeats);
+
+            console.log(`Adjusting seats: old total=${oldTotalSeats}, new total=${newTotalSeats}, old available=${course.availableSeats}, new available=${req.body.availableSeats}`);
+        }
+
+        // Update course fields
         Object.keys(req.body).forEach(key => {
             course[key] = req.body[key];
         });
 
         const updatedCourse = await course.save();
-        res.json({ success: true, course: updatedCourse });
+        res.json({
+            success: true,
+            course: updatedCourse,
+            hasConflicts: conflicts.length > 0,
+            conflicts: conflicts
+        });        // Add this function to handle conflict warnings
+        function showConflictWarning(conflicts) {
+            // Create a conflict warning dialog
+            const modal = document.createElement('div');
+            modal.className = 'modal conflict-warning-modal';
+            modal.innerHTML = `
+                <div class="modal-content">
+                    <div class="modal-header warning">
+                        <h3><i class="fas fa-exclamation-triangle"></i> Schedule Conflict Warning</h3>
+                        <span class="close">&times;</span>
+                    </div>
+                    <div class="modal-body">
+                        <p>This course has scheduling conflicts with existing courses:</p>
+                        <ul class="conflict-list">
+                            ${conflicts.map(conflict => `
+                                <li>
+                                    <strong>${conflict.course.courseCode} - ${conflict.course.title}</strong><br>
+                                    ${conflict.slot.day} ${conflict.slot.startTime}-${conflict.slot.endTime} in Room ${conflict.slot.room}
+                                </li>
+                            `).join('')}
+                        </ul>
+                        <p class="warning-message">Students will not be able to register for both courses due to the time conflict.</p>
+                    </div>
+                    <div class="modal-footer">
+                        <button class="btn btn-secondary cancel-btn">Cancel</button>
+                        <button class="btn btn-warning proceed-btn">Create Anyway</button>
+                    </div>
+                </div>
+            `;
+
+            document.body.appendChild(modal);
+
+            return new Promise(resolve => {
+                // Add event listeners
+                const closeBtn = modal.querySelector('.close');
+                const cancelBtn = modal.querySelector('.cancel-btn');
+                const proceedBtn = modal.querySelector('.proceed-btn');
+
+                closeBtn.onclick = cancelBtn.onclick = () => {
+                    document.body.removeChild(modal);
+                    resolve(false);
+                };
+
+                proceedBtn.onclick = () => {
+                    document.body.removeChild(modal);
+                    resolve(true);
+                };
+            });
+        }
+
+        // Modify the submitCourseForm function
+        function submitCourseForm(e) {
+            e.preventDefault();
+
+            // Existing form data preparation code...
+
+            // Modify the fetch call to handle conflicts
+            function submitForm() {
+                fetch('/api/courses', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    },
+                    body: JSON.stringify(courseData)
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            if (data.hasConflicts) {
+                                showToast('Course created with schedule conflicts', 'warning');
+                            } else {
+                                showToast('Course created successfully', 'success');
+                            }
+
+                            // Redirect to courses page after a delay
+                            setTimeout(() => {
+                                window.location.href = '/admin/courses';
+                            }, 1500);
+                        } else {
+                            showToast(data.error || 'Failed to create course', 'error');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        showToast('An error occurred', 'error');
+                    });
+            }
+
+            // First check for conflicts, then decide whether to proceed
+            fetch('/api/courses/check-conflicts', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                },
+                body: JSON.stringify({ schedule: courseData.schedule })
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.conflicts && data.conflicts.length > 0) {
+                        // Show warning and proceed only if admin confirms
+                        showConflictWarning(data.conflicts).then(shouldProceed => {
+                            if (shouldProceed) {
+                                submitForm();
+                            }
+                        });
+                    } else {
+                        // No conflicts, proceed normally
+                        submitForm();
+                    }
+                })
+                .catch(error => {
+                    console.error('Error checking conflicts:', error);
+                    // If conflict check fails, proceed anyway
+                    submitForm();
+                });
+        }
     } catch (error) {
+        console.error('Error updating course:', error);
+        res.status(500).json({ success: false, error: error.message });
+    }
+};
+
+// @desc    Check Conflicts
+// @route   POST /api/courses/check-conflicts
+// @access  Private/Admin
+exports.checkConflicts = async (req, res) => {
+    try {
+        const { schedule, courseId } = req.body;
+
+        const conflicts = await checkForScheduleConflicts(schedule, courseId);
+
+        res.json({
+            success: true,
+            hasConflicts: conflicts.length > 0,
+            conflicts: conflicts
+        });
+    } catch (error) {
+        console.error('Error checking conflicts:', error);
         res.status(500).json({ success: false, error: error.message });
     }
 };
